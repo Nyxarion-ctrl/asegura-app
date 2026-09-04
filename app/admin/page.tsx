@@ -1,105 +1,162 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useEffect, useState } from "react";
+import Logo from "@/components/Logo";
+import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-interface Reserva {
+interface Appointment {
   id: string;
-  cliente_nombre: string;
-  cliente_telefono: string;
-  fecha: string;
-  hora: string;
-  monto_anticipo: number;
-  estado_pago: string;
+  client_name: string;
+  client_email: string;
+  client_phone: string;
+  service_name: string;
+  service_price: string;
+  appointment_date: string;
+  appointment_time: string;
+  status: string;
   created_at: string;
 }
 
 export default function AdminPage() {
-  const [reservas, setReservas] = useState<Reserva[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchReservas() {
-      const { data, error } = await supabase
-        .from('reservas')
-        .select('*')
-        .order('created_at', { ascending: false });
+  const fetchAppointments = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      if (!error && data) {
-        setReservas(data);
-      }
-      setLoading(false);
+    if (!error && data) {
+      setAppointments(data as Appointment[]);
     }
-
-    fetchReservas();
-  }, []);
-
-  const enviarWhatsApp = (telefono: string, nombre: string, fecha: string, hora: string) => {
-    const mensaje = encodeURIComponent(
-      `Hola ${nombre}, ¡saludos desde Asegura! 👋 Te recordamos tu cita confirmada para el día ${fecha} a las ${hora}. ¡Te esperamos!`
-    );
-    const numeroLimpio = telefono.replace(/[^0-9]/g, '');
-    window.open(`https://wa.me/${numeroLimpio}?text=${mensaje}`, '_blank');
+    setLoading(false);
   };
 
+  const updateStatus = async (id: string, newStatus: string) => {
+    await supabase.from("appointments").update({ status: newStatus }).eq("id", id);
+    fetchAppointments();
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
   return (
-    <main className="min-h-screen bg-slate-100 p-6">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Panel de Control · Asegura</h1>
-            <p className="text-sm text-slate-500">Gestión de citas y anticipos confirmados</p>
+    <div className="min-h-screen bg-slate-50/50 bg-grid-pattern text-slate-900 flex flex-col font-sans">
+      {/* Header Admin */}
+      <header className="w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Logo />
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 border border-indigo-200">
+              Admin
+            </span>
           </div>
-          <span className="px-3 py-1 bg-green-100 text-green-700 font-semibold text-xs rounded-full">
-            En línea
-          </span>
+          <button
+            onClick={fetchAppointments}
+            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition-all flex items-center gap-1.5"
+          >
+            🔄 Actualizar Tabla
+          </button>
+        </div>
+      </header>
+
+      {/* Panel Contenido */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl font-extrabold text-slate-900">Gestión de Citas</h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Revisa y gestiona las reservas recibidas desde tu plataforma.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="px-4 py-2 bg-white rounded-xl border border-slate-200/80 shadow-sm text-xs font-medium">
+              Total Citas: <span className="font-bold text-slate-900">{appointments.length}</span>
+            </div>
+          </div>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12 text-slate-500">Cargando reservas...</div>
-        ) : reservas.length === 0 ? (
-          <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-500">
-            Aún no hay reservas registradas.
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-xs border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-4">Cliente</th>
-                  <th className="px-6 py-4">Teléfono</th>
-                  <th className="px-6 py-4">Fecha y Hora</th>
-                  <th className="px-6 py-4">Anticipo</th>
-                  <th className="px-6 py-4">Acción</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {reservas.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-900">{item.cliente_nombre}</td>
-                    <td className="px-6 py-4">{item.cliente_telefono}</td>
-                    <td className="px-6 py-4">{item.fecha} - {item.hora}</td>
-                    <td className="px-6 py-4 font-bold text-green-600">${item.monto_anticipo} USD</td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => enviarWhatsApp(item.cliente_telefono, item.cliente_nombre, item.fecha, item.hora)}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-lg shadow-sm transition-all flex items-center gap-1"
-                      >
-                        Recordar por WhatsApp
-                      </button>
-                    </td>
+        {/* Tabla de Citas */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-premium overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center text-sm text-slate-400">Cargando citas...</div>
+          ) : appointments.length === 0 ? (
+            <div className="p-12 text-center text-sm text-slate-500">
+              No hay citas registradas en el sistema aún.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="p-4">Cliente</th>
+                    <th className="p-4">Servicio</th>
+                    <th className="p-4">Fecha y Hora</th>
+                    <th className="p-4">Precio</th>
+                    <th className="p-4">Estado</th>
+                    <th className="p-4 text-right">Acción</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </main>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {appointments.map((item) => (
+                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="p-4">
+                        <p className="font-bold text-slate-900">{item.client_name}</p>
+                        <p className="text-slate-400 text-[11px]">{item.client_email}</p>
+                        <p className="text-slate-400 text-[11px]">{item.client_phone}</p>
+                      </td>
+                      <td className="p-4 font-medium text-slate-800">{item.service_name}</td>
+                      <td className="p-4">
+                        <p className="font-medium text-slate-900">{item.appointment_date}</p>
+                        <p className="text-slate-400 text-[11px]">{item.appointment_time}</p>
+                      </td>
+                      <td className="p-4 font-bold text-slate-900">{item.service_price}</td>
+                      <td className="p-4">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            item.status === "confirmed"
+                              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                              : item.status === "cancelled"
+                              ? "bg-rose-100 text-rose-800 border border-rose-200"
+                              : "bg-amber-100 text-amber-800 border border-amber-200"
+                          }`}
+                        >
+                          {item.status || "pending"}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right space-x-2">
+                        {item.status !== "confirmed" && (
+                          <button
+                            onClick={() => updateStatus(item.id, "confirmed")}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-medium transition-all"
+                          >
+                            Confirmar
+                          </button>
+                        )}
+                        {item.status !== "cancelled" && (
+                          <button
+                            onClick={() => updateStatus(item.id, "cancelled")}
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[11px] font-medium transition-all"
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
