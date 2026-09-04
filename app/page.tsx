@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import Logo from "@/components/Logo";
+import { createClient } from "@supabase/supabase-js";
+
+// Inicializar cliente de Supabase
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const SERVICES = [
   { id: "1", name: "Consulta Inicial / Valoración", duration: "30 min", price: "$25" },
@@ -18,10 +24,37 @@ export default function Home() {
   const [selectedTime, setSelectedTime] = useState("");
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      // Guardar cita en Supabase
+      const { error } = await supabase.from("appointments").insert([
+        {
+          client_name: formData.name,
+          client_email: formData.email,
+          client_phone: formData.phone,
+          service_name: selectedService.name,
+          service_price: selectedService.price,
+          appointment_date: selectedDate,
+          appointment_time: selectedTime,
+          status: "pending",
+        },
+      ]);
+
+      if (error) throw error;
+      setIsSubmitted(true);
+    } catch (err: any) {
+      console.error("Error al guardar cita:", err);
+      setErrorMessage("No se pudo guardar la cita. Inténtalo de nuevo.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -39,7 +72,6 @@ export default function Home() {
 
       {/* Contenido Principal */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 md:py-12">
-        {/* Encabezado */}
         <div className="text-center max-w-xl mx-auto mb-10">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
             Reserva tu Cita en Segundos
@@ -51,7 +83,6 @@ export default function Home() {
 
         {!isSubmitted ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Formulario Principal por Pasos */}
             <div className="lg:col-span-7 bg-white rounded-2xl p-6 md:p-8 shadow-premium border border-slate-200/80">
               
               {/* Indicador de Pasos */}
@@ -78,7 +109,7 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Paso 1: Selección de Servicio */}
+              {/* Paso 1: Servicio */}
               {step === 1 && (
                 <div className="space-y-4">
                   <h2 className="text-lg font-bold text-slate-900 mb-3">1. Selecciona un Servicio</h2>
@@ -111,7 +142,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Paso 2: Selección de Fecha y Hora */}
+              {/* Paso 2: Fecha y Hora */}
               {step === 2 && (
                 <div className="space-y-6">
                   <h2 className="text-lg font-bold text-slate-900">2. Elige Fecha y Horario</h2>
@@ -166,10 +197,16 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Paso 3: Formulario de Contacto */}
+              {/* Paso 3: Contacto y Confirmación */}
               {step === 3 && (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <h2 className="text-lg font-bold text-slate-900 mb-2">3. Ingresa tus Datos</h2>
+
+                  {errorMessage && (
+                    <div className="p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-200">
+                      {errorMessage}
+                    </div>
+                  )}
                   
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Nombre Completo</label>
@@ -217,9 +254,10 @@ export default function Home() {
                     </button>
                     <button
                       type="submit"
-                      className="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-all text-sm shadow-md shadow-emerald-500/10"
+                      disabled={isLoading}
+                      className="w-2/3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all text-sm shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2"
                     >
-                      Confirmar Cita
+                      {isLoading ? "Guardando..." : "Confirmar Cita"}
                     </button>
                   </div>
                 </form>
@@ -271,16 +309,15 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          /* Pantalla de Confirmación Exitosa */
-          <div className="max-w-md mx-auto bg-white rounded-2xl p-8 shadow-premium border border-slate-200/80 text-center animate-in fade-in zoom-in duration-300">
+          <div className="max-w-md mx-auto bg-white rounded-2xl p-8 shadow-premium border border-slate-200/80 text-center">
             <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">¡Cita Solicitada con Éxito!</h2>
+            <h2 className="text-2xl font-bold text-slate-900">¡Cita Guardada Exitosamente!</h2>
             <p className="text-slate-500 text-sm mt-2">
-              Hemos registrado tu reserva para el servicio <span className="font-semibold text-slate-800">{selectedService.name}</span>.
+              Los datos se han registrado correctamente en el sistema.
             </p>
             <div className="mt-6 p-4 rounded-xl bg-slate-50 text-left text-xs space-y-2 border border-slate-200/60">
               <p><span className="text-slate-400">Cliente:</span> <strong className="text-slate-700">{formData.name}</strong></p>
