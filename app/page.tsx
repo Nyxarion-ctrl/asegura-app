@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
 import { createClient } from "@supabase/supabase-js";
 
@@ -9,17 +9,21 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const SERVICES = [
-  { id: "1", name: "Consulta Inicial / Valoración", duration: "30 min", price: "$25" },
-  { id: "2", name: "Sesión Estándar", duration: "60 min", price: "$50" },
-  { id: "3", name: "Servicio Premium Especializado", duration: "90 min", price: "$80" },
-];
+interface Service {
+  id: string;
+  name: string;
+  duration: string;
+  price: number | string;
+}
 
 const TIME_SLOTS = ["09:00 AM", "10:30 AM", "01:00 PM", "03:00 PM", "04:30 PM"];
 
 export default function Home() {
   const [step, setStep] = useState(1);
-  const [selectedService, setSelectedService] = useState(SERVICES[0]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [loadingServices, setLoadingServices] = useState(true);
+
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
@@ -27,8 +31,43 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Cargar servicios dinámicamente desde Supabase
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        setLoadingServices(true);
+        const { data, error } = await supabase
+          .from("services")
+          .select("*")
+          .order("price", { ascending: true });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setServices(data);
+          setSelectedService(data[0]);
+        }
+      } catch (err: any) {
+        console.error("Error al cargar servicios desde Supabase:", err);
+      } finally {
+        setLoadingServices(false);
+      }
+    }
+
+    fetchServices();
+  }, []);
+
+  // Formatear precio para evitar inconsistencias
+  const formatPrice = (price: number | string | undefined) => {
+    if (price === undefined || price === null) return "$0";
+    if (typeof price === "number") return `$${price}`;
+    return price.startsWith("$") ? price : `$${price}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedService) return;
+
     setIsLoading(true);
     setErrorMessage("");
 
@@ -40,7 +79,7 @@ export default function Home() {
           client_email: formData.email,
           client_phone: formData.phone,
           service_name: selectedService.name,
-          service_price: selectedService.price,
+          service_price: formatPrice(selectedService.price),
           appointment_date: selectedDate,
           appointment_time: selectedTime,
           status: "pending",
@@ -113,29 +152,42 @@ export default function Home() {
               {step === 1 && (
                 <div className="space-y-4">
                   <h2 className="text-lg font-bold text-slate-900 mb-3">1. Selecciona un Servicio</h2>
-                  <div className="space-y-3">
-                    {SERVICES.map((srv) => (
-                      <button
-                        key={srv.id}
-                        type="button"
-                        onClick={() => setSelectedService(srv)}
-                        className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between ${
-                          selectedService.id === srv.id
-                            ? "border-indigo-600 bg-indigo-50/40 ring-2 ring-indigo-500/20"
-                            : "border-slate-200 hover:border-slate-300 bg-white"
-                        }`}
-                      >
-                        <div>
-                          <p className="font-semibold text-slate-900 text-sm">{srv.name}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">Duración aprox: {srv.duration}</p>
-                        </div>
-                        <span className="text-sm font-bold text-slate-900">{srv.price}</span>
-                      </button>
-                    ))}
-                  </div>
+                  
+                  {loadingServices ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse"></div>
+                      ))}
+                    </div>
+                  ) : services.length === 0 ? (
+                    <p className="text-sm text-slate-500 text-center py-4">No hay servicios disponibles en este momento.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {services.map((srv) => (
+                        <button
+                          key={srv.id}
+                          type="button"
+                          onClick={() => setSelectedService(srv)}
+                          className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between ${
+                            selectedService?.id === srv.id
+                              ? "border-indigo-600 bg-indigo-50/40 ring-2 ring-indigo-500/20"
+                              : "border-slate-200 hover:border-slate-300 bg-white"
+                          }`}
+                        >
+                          <div>
+                            <p className="font-semibold text-slate-900 text-sm">{srv.name}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">Duración aprox: {srv.duration}</p>
+                          </div>
+                          <span className="text-sm font-bold text-slate-900">{formatPrice(srv.price)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   <button
+                    disabled={!selectedService}
                     onClick={() => setStep(2)}
-                    className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition-all text-sm shadow-md shadow-indigo-500/10"
+                    className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-all text-sm shadow-md shadow-indigo-500/10"
                   >
                     Continuar a Fecha y Hora &rarr;
                   </button>
@@ -278,8 +330,8 @@ export default function Home() {
               <div className="space-y-4 text-sm">
                 <div>
                   <span className="text-xs text-slate-400 block mb-1">Servicio Seleccionado</span>
-                  <p className="font-semibold text-slate-100">{selectedService.name}</p>
-                  <p className="text-xs text-indigo-300 mt-0.5">{selectedService.duration}</p>
+                  <p className="font-semibold text-slate-100">{selectedService?.name || "Selecciona un servicio"}</p>
+                  <p className="text-xs text-indigo-300 mt-0.5">{selectedService?.duration || "-"}</p>
                 </div>
 
                 <div className="pt-3 border-t border-slate-800/80">
@@ -294,7 +346,7 @@ export default function Home() {
 
                 <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
                   <span className="text-slate-400 font-medium">Costo Total</span>
-                  <span className="text-2xl font-black text-white">{selectedService.price}</span>
+                  <span className="text-2xl font-black text-white">{formatPrice(selectedService?.price)}</span>
                 </div>
               </div>
 
