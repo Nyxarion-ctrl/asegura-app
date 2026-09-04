@@ -34,13 +34,26 @@ export default function AdminPage() {
 
     if (!error && data) {
       setAppointments(data as Appointment[]);
+    } else if (error) {
+      console.error("Error al obtener citas:", error.message);
     }
     setLoading(false);
   };
 
-  const updateStatus = async (id: string, newStatus: string) => {
-    await supabase.from("appointments").update({ status: newStatus }).eq("id", id);
-    fetchAppointments();
+  const updateStatus = async (id: string, newStatus: "CONFIRMED" | "CANCELLED" | "confirmed" | "cancelled") => {
+    const { error } = await supabase
+      .from("appointments")
+      .update({ status: newStatus })
+      .eq("id", id);
+
+    if (error) {
+      alert("Error al actualizar el estado: " + error.message);
+    } else {
+      // Actualización optimista de la UI
+      setAppointments((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
+      );
+    }
   };
 
   useEffect(() => {
@@ -105,52 +118,56 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
-                  {appointments.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-4">
-                        <p className="font-bold text-slate-900">{item.client_name}</p>
-                        <p className="text-slate-400 text-[11px]">{item.client_email}</p>
-                        <p className="text-slate-400 text-[11px]">{item.client_phone}</p>
-                      </td>
-                      <td className="p-4 font-medium text-slate-800">{item.service_name}</td>
-                      <td className="p-4">
-                        <p className="font-medium text-slate-900">{item.appointment_date}</p>
-                        <p className="text-slate-400 text-[11px]">{item.appointment_time}</p>
-                      </td>
-                      <td className="p-4 font-bold text-slate-900">{item.service_price}</td>
-                      <td className="p-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                            item.status === "confirmed"
-                              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                              : item.status === "cancelled"
-                              ? "bg-rose-100 text-rose-800 border border-rose-200"
-                              : "bg-amber-100 text-amber-800 border border-amber-200"
-                          }`}
-                        >
-                          {item.status || "pending"}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right space-x-2">
-                        {item.status !== "confirmed" && (
-                          <button
-                            onClick={() => updateStatus(item.id, "confirmed")}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-medium transition-all"
+                  {appointments.map((item) => {
+                    const currentStatus = (item.status || "pending").toLowerCase();
+
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4">
+                          <p className="font-bold text-slate-900">{item.client_name}</p>
+                          <p className="text-slate-400 text-[11px]">{item.client_email}</p>
+                          <p className="text-slate-400 text-[11px]">{item.client_phone}</p>
+                        </td>
+                        <td className="p-4 font-medium text-slate-800">{item.service_name}</td>
+                        <td className="p-4">
+                          <p className="font-medium text-slate-900">{item.appointment_date}</p>
+                          <p className="text-slate-400 text-[11px]">{item.appointment_time}</p>
+                        </td>
+                        <td className="p-4 font-bold text-slate-900">{item.service_price}</td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              currentStatus === "confirmed"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                : currentStatus === "cancelled"
+                                ? "bg-rose-100 text-rose-800 border border-rose-200"
+                                : "bg-amber-100 text-amber-800 border border-amber-200"
+                            }`}
                           >
-                            Confirmar
-                          </button>
-                        )}
-                        {item.status !== "cancelled" && (
-                          <button
-                            onClick={() => updateStatus(item.id, "cancelled")}
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[11px] font-medium transition-all"
-                          >
-                            Cancelar
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                            {item.status || "pending"}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right space-x-2">
+                          {currentStatus !== "confirmed" && (
+                            <button
+                              onClick={() => updateStatus(item.id, "CONFIRMED")}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-medium transition-all"
+                            >
+                              Confirmar
+                            </button>
+                          )}
+                          {currentStatus !== "cancelled" && (
+                            <button
+                              onClick={() => updateStatus(item.id, "CANCELLED")}
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[11px] font-medium transition-all"
+                            >
+                              Cancelar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
