@@ -84,13 +84,16 @@ export default function Home() {
     setErrorMessage("");
 
     try {
+      const priceFormatted = formatPrice(selectedService.price);
+
+      // 1. Guardar cita en Supabase
       const { error } = await supabase.from("appointments").insert([
         {
           client_name: formData.name.trim(),
           client_email: formData.email.trim(),
           client_phone: formData.phone.trim(),
           service_name: selectedService.name,
-          service_price: formatPrice(selectedService.price),
+          service_price: priceFormatted,
           appointment_date: selectedDate,
           appointment_time: selectedTime,
           status: "pending",
@@ -98,11 +101,26 @@ export default function Home() {
       ]);
 
       if (error) throw error;
+
+      // 2. Enviar notificación por email vía Resend
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName: formData.name.trim(),
+          clientEmail: formData.email.trim(),
+          serviceName: selectedService.name,
+          appointmentDate: selectedDate,
+          appointmentTime: selectedTime,
+          servicePrice: priceFormatted,
+        }),
+      });
+
       setIsSubmitted(true);
     } catch (err: any) {
-      console.error("Error al guardar cita:", err);
+      console.error("Error al procesar reserva:", err);
       setErrorMessage(
-        err?.message || "No se pudo guardar la cita. Inténtalo de nuevo."
+        err?.message || "No se pudo completar la reserva. Inténtalo de nuevo."
       );
     } finally {
       setIsLoading(false);
@@ -137,7 +155,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-7 bg-white rounded-3xl p-6 md:p-8 shadow-xl shadow-slate-200/50 border border-slate-200/80 transition-all">
               
-              {/* Stepper / Indicador de Pasos con Línea de Conexión */}
+              {/* Stepper / Indicador de Pasos */}
               <div className="relative flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
                 <div className="absolute top-4 left-6 right-6 h-0.5 bg-slate-100 -z-0"></div>
                 <div
@@ -399,7 +417,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
                 <p className="text-xs text-slate-300 leading-relaxed font-normal">
-                  Reserva garantizada. Recibirás un recordatorio por correo electrónico y WhatsApp una vez confirmada.
+                  Reserva garantizada. Recibirás un correo de confirmación de forma inmediata.
                 </p>
               </div>
             </div>
@@ -413,7 +431,7 @@ export default function Home() {
             </div>
             <h2 className="text-2xl font-black text-slate-900">¡Cita Guardada Exitosamente!</h2>
             <p className="text-slate-500 text-sm mt-2">
-              Los datos se han registrado correctamente en el sistema.
+              Hemos enviado un correo de confirmación a <strong className="text-slate-700">{formData.email}</strong>.
             </p>
             <div className="mt-6 p-4 rounded-2xl bg-slate-50 text-left text-xs space-y-2.5 border border-slate-200/80">
               <p className="flex justify-between"><span className="text-slate-400">Cliente:</span> <strong className="text-slate-800 font-semibold">{formData.name}</strong></p>
