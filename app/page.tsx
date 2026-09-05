@@ -1,452 +1,582 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Logo from "@/components/Logo";
 import { createClient } from "@supabase/supabase-js";
+import { 
+  Calendar, 
+  Clock, 
+  CheckCircle2, 
+  User, 
+  Mail, 
+  ShieldAlert, 
+  ArrowLeft, 
+  ArrowRight, 
+  Sparkles, 
+  Check, 
+  Loader2,
+  Info
+} from "lucide-react";
 
+// Inicializar cliente de Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-interface Service {
+export interface ServiceItem {
   id: string;
   name: string;
+  price: string;
   duration: string;
-  price: number | string;
+  description: string;
+  features: string[];
 }
 
-const TIME_SLOTS = ["09:00 AM", "10:30 AM", "01:00 PM", "03:00 PM", "04:30 PM"];
+const SERVICES: ServiceItem[] = [
+  { 
+    id: "1", 
+    name: "Seguro de Vehículo Personal", 
+    price: "$120 / mes", 
+    duration: "45 min",
+    description: "Cobertura completa contra accidentes, daños a terceros y robos con asistencia vial 24/7.",
+    features: ["Asistencia en grúa ilimitada", "Cobertura de daños a terceros", "Vehículo de reemplazo"]
+  },
+  { 
+    id: "2", 
+    name: "Asesoría de Seguro de Salud", 
+    price: "$85 / sesión", 
+    duration: "30 min",
+    description: "Evaluación detallada de planes de salud familiares e individuales para optimizar tus coberturas.",
+    features: ["Análisis de red médica", "Comparativa de deducibles", "Evaluación de dependientes"]
+  },
+  { 
+    id: "3", 
+    name: "Seguro de Propiedad y Hogar", 
+    price: "$150 / mes", 
+    duration: "60 min",
+    description: "Protección total para tu vivienda, estructura y pertenencias ante catástrofes e incendios.",
+    features: ["Protección contra incendios", "Robo de contenidos", "Responsabilidad civil en el hogar"]
+  },
+];
 
-export default function Home() {
-  const [step, setStep] = useState(1);
-  const [services, setServices] = useState<Service[]>([]);
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [loadingServices, setLoadingServices] = useState(true);
+const TIME_SLOTS = [
+  "09:00 AM", 
+  "10:00 AM", 
+  "11:00 AM",
+  "02:00 PM", 
+  "03:00 PM", 
+  "04:00 PM", 
+  "05:00 PM"
+];
 
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+export default function BookingPage() {
+  const [step, setStep] = useState<number>(1);
+  const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedTime, setSelectedTime] = useState<string>("");
+  
+  // Disponibilidad en tiempo real desde Supabase
+  const [occupiedTimes, setOccupiedTimes] = useState<string[]>([]);
+  const [loadingAvailability, setLoadingAvailability] = useState<boolean>(false);
 
-  const todayDateStr = new Date().toISOString().split("T")[0];
+  // Formulario del cliente
+  const [clientName, setClientName] = useState<string>("");
+  const [clientEmail, setClientEmail] = useState<string>("");
+  const [clientPhone, setClientPhone] = useState<string>("");
+  const [clientNotes, setClientNotes] = useState<string>("");
 
+  // Estados de control de UI
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [confirmed, setConfirmed] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+
+  // Consultar disponibilidad en Supabase al cambiar la fecha seleccionada
   useEffect(() => {
-    let isMounted = true;
-    async function fetchServices() {
+    if (!selectedDate) {
+      setOccupiedTimes([]);
+      return;
+    }
+
+    const fetchOccupiedTimes = async () => {
+      setLoadingAvailability(true);
+      setSelectedTime(""); // Resetear hora previamente seleccionada
+      setErrorMessage("");
+
       try {
-        setLoadingServices(true);
         const { data, error } = await supabase
-          .from("services")
-          .select("*")
-          .order("price", { ascending: true });
+          .from("appointments")
+          .select("appointment_time")
+          .eq("appointment_date", selectedDate)
+          .neq("status", "Cancelada"); // Ignorar citas canceladas
 
-        if (error) throw error;
-
-        if (isMounted && data && data.length > 0) {
-          setServices(data);
-          setSelectedService(data[0]);
+        if (error) {
+          console.error("Error al consultar disponibilidad:", error);
+          setErrorMessage("No se pudo cargar la disponibilidad en tiempo real. Intenta de nuevo.");
+        } else if (data) {
+          const booked = data.map((item: { appointment_time: string }) => item.appointment_time);
+          setOccupiedTimes(booked);
         }
       } catch (err) {
-        console.error("Error al cargar servicios:", err);
+        console.error("Excepción consultando disponibilidad:", err);
       } finally {
-        if (isMounted) setLoadingServices(false);
+        setLoadingAvailability(false);
       }
-    }
-    fetchServices();
-    return () => {
-      isMounted = false;
     };
-  }, []);
 
-  const formatPrice = (price: number | string | undefined) => {
-    if (price === undefined || price === null) return "$0";
-    if (typeof price === "number") return `$${price}`;
-    return price.startsWith("$") ? price : `$${price}`;
-  };
+    fetchOccupiedTimes();
+  }, [selectedDate]);
 
-  const handleReset = () => {
-    setIsSubmitted(false);
-    setStep(1);
-    setSelectedDate("");
-    setSelectedTime("");
-    setFormData({ name: "", email: "", phone: "" });
-    setErrorMessage("");
-    if (services.length > 0) setSelectedService(services[0]);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Manejador del envío del formulario
+  const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedService || !selectedDate || !selectedTime) return;
-
-    setIsLoading(true);
     setErrorMessage("");
+
+    if (!selectedService || !selectedDate || !selectedTime) {
+      setErrorMessage("Por favor completa la selección de servicio, fecha y hora.");
+      return;
+    }
+
+    if (!clientName.trim() || !clientEmail.trim()) {
+      setErrorMessage("Por favor proporciona tu nombre y correo electrónico.");
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
-      const priceFormatted = formatPrice(selectedService.price);
+      // 1. Verificar nuevamente disponibilidad previa a la inserción
+      const { data: existing, error: checkError } = await supabase
+        .from("appointments")
+        .select("id")
+        .eq("appointment_date", selectedDate)
+        .eq("appointment_time", selectedTime)
+        .neq("status", "Cancelada");
 
-      // 1. Guardar cita en Supabase
-      const { error } = await supabase.from("appointments").insert([
+      if (checkError) {
+        throw new Error("Ocurrió un error verificando la disponibilidad del turno.");
+      }
+
+      if (existing && existing.length > 0) {
+        throw new Error("El horario seleccionado acaba de ser ocupado. Por favor elige otro turno.");
+      }
+
+      // 2. Guardar la cita en la tabla `appointments` de Supabase
+      const { error: dbError } = await supabase.from("appointments").insert([
         {
-          client_name: formData.name.trim(),
-          client_email: formData.email.trim(),
-          client_phone: formData.phone.trim(),
+          client_name: clientName,
+          client_email: clientEmail,
+          client_phone: clientPhone || null,
+          notes: clientNotes || null,
           service_name: selectedService.name,
-          service_price: priceFormatted,
+          service_price: selectedService.price,
           appointment_date: selectedDate,
           appointment_time: selectedTime,
-          status: "pending",
+          status: "Pendiente",
         },
       ]);
 
-      if (error) throw error;
+      if (dbError) {
+        console.error("Error Supabase:", dbError);
+        throw new Error("Error al guardar la cita en la base de datos.");
+      }
 
-      // 2. Enviar notificación por email vía Resend
-      await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientName: formData.name.trim(),
-          clientEmail: formData.email.trim(),
-          serviceName: selectedService.name,
-          appointmentDate: selectedDate,
-          appointmentTime: selectedTime,
-          servicePrice: priceFormatted,
-        }),
-      });
+      // 3. Enviar correo de confirmación mediante Resend API Route
+      try {
+        const response = await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientName,
+            clientEmail,
+            serviceName: selectedService.name,
+            appointmentDate: selectedDate,
+            appointmentTime: selectedTime,
+            servicePrice: selectedService.price,
+          }),
+        });
 
-      setIsSubmitted(true);
+        if (!response.ok) {
+          console.warn("La cita fue registrada pero hubo un inconveniente notificando por email.");
+        }
+      } catch (emailErr) {
+        console.error("Error al conectar con la API de correos:", emailErr);
+      }
+
+      setConfirmed(true);
     } catch (err: any) {
-      console.error("Error al procesar reserva:", err);
-      setErrorMessage(
-        err?.message || "No se pudo completar la reserva. Inténtalo de nuevo."
-      );
+      setErrorMessage(err.message || "Ocurrió un problema procesando tu reserva. Intenta nuevamente.");
     } finally {
-      setIsLoading(false);
+      setSubmitting(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50/60 bg-grid-pattern text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Header Minimalista */}
-      <header className="w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Logo />
-          <span className="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center gap-2 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Sistema en Línea
-          </span>
-        </div>
-      </header>
+  // Pantalla de Confirmación
+  if (confirmed) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-lg w-full bg-white rounded-3xl shadow-xl p-8 md:p-10 text-center border border-slate-100 animate-in fade-in zoom-in duration-300">
+          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <CheckCircle2 className="w-10 h-10" />
+          </div>
 
-      {/* Contenido Principal */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 md:py-12">
-        <div className="text-center max-w-xl mx-auto mb-10">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900">
-            Reserva tu Cita en Segundos
+          <h1 className="text-3xl font-extrabold text-slate-900 mb-2">¡Cita Registrada!</h1>
+          <p className="text-slate-600 mb-8 text-sm md:text-base">
+            Hemos reservado tu turno correctamente. Hemos enviado un correo con todos los detalles a{" "}
+            <span className="font-semibold text-slate-800">{clientEmail}</span>.
+          </p>
+
+          <div className="bg-slate-50 p-6 rounded-2xl text-left mb-8 space-y-3 text-sm border border-slate-200/80">
+            <div className="flex justify-between border-b border-slate-200/60 pb-2">
+              <span className="text-slate-500">Servicio:</span>
+              <span className="font-semibold text-slate-800 text-right">{selectedService?.name}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-200/60 pb-2">
+              <span className="text-slate-500">Fecha:</span>
+              <span className="font-semibold text-slate-800">{selectedDate}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-200/60 pb-2">
+              <span className="text-slate-500">Hora:</span>
+              <span className="font-semibold text-slate-800">{selectedTime}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-200/60 pb-2">
+              <span className="text-slate-500">Cliente:</span>
+              <span className="font-semibold text-slate-800">{clientName}</span>
+            </div>
+            <div className="flex justify-between pt-1">
+              <span className="text-slate-500">Monto del Servicio:</span>
+              <span className="font-bold text-indigo-600">{selectedService?.price}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full bg-indigo-600 text-white font-semibold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
+          >
+            Agendar otra cita
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-50 py-12 px-4 flex justify-center items-start">
+      <div className="max-w-3xl w-full">
+        {/* Encabezado Principal */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-1.5 rounded-full text-xs font-semibold mb-3">
+            <Sparkles className="w-4 h-4" /> Reserva online en tiempo real
+          </div>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+            Agenda tu Consulta de Seguros
           </h1>
-          <p className="mt-2 text-slate-500 text-sm md:text-base leading-relaxed">
-            Selecciona el servicio de tu preferencia, elige el horario disponible y confirma tu solicitud sin complicaciones.
+          <p className="text-slate-500 mt-2 text-sm md:text-base max-w-md mx-auto">
+            Elige el servicio de tu interés y selecciona el horario que mejor se adapte a tu agenda.
           </p>
         </div>
 
-        {!isSubmitted ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-7 bg-white rounded-3xl p-6 md:p-8 shadow-xl shadow-slate-200/50 border border-slate-200/80 transition-all">
-              
-              {/* Stepper / Indicador de Pasos */}
-              <div className="relative flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
-                <div className="absolute top-4 left-6 right-6 h-0.5 bg-slate-100 -z-0"></div>
-                <div
-                  className="absolute top-4 left-6 h-0.5 bg-indigo-600 transition-all duration-300 -z-0"
-                  style={{ width: step === 1 ? "0%" : step === 2 ? "50%" : "100%" }}
-                ></div>
-
-                {[
-                  { num: 1, label: "Servicio" },
-                  { num: 2, label: "Fecha y Hora" },
-                  { num: 3, label: "Tus Datos" },
-                ].map((s) => (
-                  <div key={s.num} className="relative z-10 flex flex-col items-center gap-1.5 bg-white px-2">
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
-                        step === s.num
-                          ? "bg-indigo-600 text-white ring-4 ring-indigo-100 shadow-md shadow-indigo-500/20 scale-105"
-                          : step > s.num
-                          ? "bg-emerald-600 text-white"
-                          : "bg-slate-100 text-slate-400 border border-slate-200"
-                      }`}
-                    >
-                      {step > s.num ? "✓" : s.num}
-                    </div>
-                    <span className={`text-xs font-medium ${step >= s.num ? "text-slate-900 font-semibold" : "text-slate-400"}`}>
-                      {s.label}
-                    </span>
-                  </div>
-                ))}
+        {/* Indicador de Pasos / Stepper */}
+        <div className="flex justify-between items-center mb-10 max-w-md mx-auto relative px-4">
+          {[
+            { label: "Servicio", num: 1 },
+            { label: "Fecha y Hora", num: 2 },
+            { label: "Tus Datos", num: 3 },
+          ].map((item) => (
+            <div key={item.num} className="flex flex-col items-center z-10">
+              <div
+                className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+                  step === item.num
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 ring-4 ring-indigo-100"
+                    : step > item.num
+                    ? "bg-emerald-500 text-white"
+                    : "bg-white text-slate-400 border border-slate-200"
+                }`}
+              >
+                {step > item.num ? <Check className="w-5 h-5" /> : item.num}
               </div>
-
-              {/* Paso 1: Servicio */}
-              {step === 1 && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-bold text-slate-900 mb-4">1. Selecciona un Servicio</h2>
-                  
-                  {loadingServices ? (
-                    <div className="space-y-3">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-20 bg-slate-100/80 rounded-2xl animate-pulse"></div>
-                      ))}
-                    </div>
-                  ) : services.length === 0 ? (
-                    <p className="text-sm text-slate-500 text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                      No hay servicios disponibles en este momento.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {services.map((srv) => {
-                        const isSelected = selectedService?.id === srv.id;
-                        return (
-                          <button
-                            key={srv.id}
-                            type="button"
-                            onClick={() => setSelectedService(srv)}
-                            className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between group cursor-pointer ${
-                              isSelected
-                                ? "border-indigo-600 bg-indigo-50/40 shadow-sm"
-                                : "border-slate-100 hover:border-slate-300 bg-white hover:bg-slate-50/50"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
-                                isSelected ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 group-hover:border-slate-400"
-                              }`}>
-                                {isSelected && <span className="text-[10px]">✓</span>}
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-900 text-sm">{srv.name}</p>
-                                <p className="text-xs text-slate-500 mt-0.5">Duración aprox: {srv.duration}</p>
-                              </div>
-                            </div>
-                            <span className="text-base font-extrabold text-slate-900">{formatPrice(srv.price)}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  <button
-                    disabled={!selectedService}
-                    onClick={() => setStep(2)}
-                    className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 cursor-pointer disabled:cursor-not-allowed active:scale-[0.99]"
-                  >
-                    Continuar a Fecha y Hora &rarr;
-                  </button>
-                </div>
-              )}
-
-              {/* Paso 2: Fecha y Hora */}
-              {step === 2 && (
-                <div className="space-y-6">
-                  <h2 className="text-lg font-bold text-slate-900">2. Elige Fecha y Horario</h2>
-                  
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Fecha de la Cita</label>
-                    <input
-                      type="date"
-                      min={todayDateStr}
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full p-3.5 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all bg-slate-50/30"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Horarios Disponibles</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                      {TIME_SLOTS.map((slot) => {
-                        const isSelected = selectedTime === slot;
-                        return (
-                          <button
-                            key={slot}
-                            type="button"
-                            onClick={() => setSelectedTime(slot)}
-                            className={`p-3 rounded-xl text-xs font-bold border-2 transition-all cursor-pointer ${
-                              isSelected
-                                ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-[1.02]"
-                                : "border-slate-100 hover:border-slate-300 text-slate-700 bg-white"
-                            }`}
-                          >
-                            {slot}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setStep(1)}
-                      className="w-1/3 border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold py-3.5 rounded-xl text-sm transition-all cursor-pointer"
-                    >
-                      &larr; Volver
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!selectedDate || !selectedTime}
-                      onClick={() => setStep(3)}
-                      className="w-2/3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 cursor-pointer disabled:cursor-not-allowed active:scale-[0.99]"
-                    >
-                      Continuar a tus Datos &rarr;
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Paso 3: Contacto y Confirmación */}
-              {step === 3 && (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <h2 className="text-lg font-bold text-slate-900 mb-2">3. Ingresa tus Datos</h2>
-
-                  {errorMessage && (
-                    <div className="p-3.5 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200/80 font-medium">
-                      {errorMessage}
-                    </div>
-                  )}
-                  
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Nombre Completo</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ej. Juan Pérez"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full p-3.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all placeholder:text-slate-400 bg-slate-50/30"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Correo Electrónico</label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="juan@ejemplo.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full p-3.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all placeholder:text-slate-400 bg-slate-50/30"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Teléfono / WhatsApp</label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="+1 (809) 000-0000"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full p-3.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all placeholder:text-slate-400 bg-slate-50/30"
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setStep(2)}
-                      className="w-1/3 border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold py-3.5 rounded-xl text-sm transition-all cursor-pointer"
-                    >
-                      &larr; Volver
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="w-2/3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed active:scale-[0.99]"
-                    >
-                      {isLoading ? (
-                        <>
-                          <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-                          <span>Guardando Cita...</span>
-                        </>
-                      ) : (
-                        "Confirmar Cita"
-                      )}
-                    </button>
-                  </div>
-                </form>
-              )}
+              <span
+                className={`text-xs mt-2 font-medium ${
+                  step === item.num ? "text-indigo-600 font-bold" : "text-slate-500"
+                }`}
+              >
+                {item.label}
+              </span>
             </div>
+          ))}
 
-            {/* Tarjeta de Resumen Flotante Dinámica */}
-            <div className="lg:col-span-5 bg-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
-
-              <h3 className="text-base font-bold text-slate-100 mb-6 pb-4 border-b border-slate-800 flex items-center justify-between">
-                <span>Resumen de Reserva</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 bg-indigo-950/90 px-2.5 py-1 rounded-md border border-indigo-800/60">
-                  ASEGURA
-                </span>
-              </h3>
-
-              <div className="space-y-5 text-sm">
-                <div>
-                  <span className="text-xs text-slate-400 block mb-1">Servicio Seleccionado</span>
-                  <p className="font-bold text-slate-100 text-base">{selectedService?.name || "Selecciona un servicio"}</p>
-                  <p className="text-xs text-indigo-400 font-medium mt-0.5">{selectedService?.duration || "-"}</p>
-                </div>
-
-                <div className="pt-4 border-t border-slate-800/80">
-                  <span className="text-xs text-slate-400 block mb-1">Fecha y Horario</span>
-                  <p className={`font-semibold ${selectedDate ? "text-slate-100" : "text-slate-500 italic"}`}>
-                    {selectedDate ? selectedDate : "Por seleccionar..."}
-                  </p>
-                  <p className={`text-xs mt-0.5 ${selectedTime ? "text-slate-300 font-medium" : "text-slate-500 italic"}`}>
-                    {selectedTime ? selectedTime : "Horario pendiente"}
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                  <span className="text-slate-400 font-medium">Costo Total</span>
-                  <span className="text-3xl font-black text-white">{formatPrice(selectedService?.price)}</span>
-                </div>
-              </div>
-
-              <div className="mt-8 p-4 rounded-2xl bg-slate-800/50 border border-slate-700/60 flex items-start gap-3 backdrop-blur-sm">
-                <svg className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                <p className="text-xs text-slate-300 leading-relaxed font-normal">
-                  Reserva garantizada. Recibirás un correo de confirmación de forma inmediata.
-                </p>
-              </div>
-            </div>
+          {/* Línea conectora entre pasos */}
+          <div className="absolute top-5 left-10 right-10 h-0.5 bg-slate-200 -z-0">
+            <div
+              className="h-full bg-emerald-500 transition-all duration-300"
+              style={{ width: step === 1 ? "0%" : step === 2 ? "50%" : "100%" }}
+            />
           </div>
-        ) : (
-          <div className="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-2xl border border-slate-200/80 text-center">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
-              <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-black text-slate-900">¡Cita Guardada Exitosamente!</h2>
-            <p className="text-slate-500 text-sm mt-2">
-              Hemos enviado un correo de confirmación a <strong className="text-slate-700">{formData.email}</strong>.
-            </p>
-            <div className="mt-6 p-4 rounded-2xl bg-slate-50 text-left text-xs space-y-2.5 border border-slate-200/80">
-              <p className="flex justify-between"><span className="text-slate-400">Cliente:</span> <strong className="text-slate-800 font-semibold">{formData.name}</strong></p>
-              <p className="flex justify-between"><span className="text-slate-400">Fecha y Hora:</span> <strong className="text-slate-800 font-semibold">{selectedDate} ({selectedTime})</strong></p>
-              <p className="flex justify-between"><span className="text-slate-400">Contacto:</span> <strong className="text-slate-800 font-semibold">{formData.email}</strong></p>
-            </div>
-            <button
-              onClick={handleReset}
-              className="mt-6 w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md cursor-pointer active:scale-[0.99]"
-            >
-              Realizar Otra Reserva
-            </button>
+        </div>
+
+        {/* Mensaje de Alerta / Error */}
+        {errorMessage && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-3 text-sm animate-in fade-in">
+            <ShieldAlert className="w-5 h-5 flex-shrink-0 text-red-600" />
+            <p className="flex-1">{errorMessage}</p>
           </div>
         )}
-      </main>
-    </div>
+
+        {/* Tarjeta de Contenido del Formulario */}
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 md:p-10 transition-all">
+          
+          {/* PASO 1: Selección de Servicio */}
+          {step === 1 && (
+            <div className="space-y-6 animate-in fade-in">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">1. Selecciona el servicio que necesitas</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Haz clic sobre una de las opciones para continuar con tu reserva.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {SERVICES.map((srv) => {
+                  const isSelected = selectedService?.id === srv.id;
+                  return (
+                    <div
+                      key={srv.id}
+                      onClick={() => setSelectedService(srv)}
+                      className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
+                        isSelected
+                          ? "border-indigo-600 bg-indigo-50/40 shadow-sm"
+                          : "border-slate-200/80 hover:border-slate-300 bg-white"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-bold text-slate-800 text-base">{srv.name}</h3>
+                          <span className="inline-block text-xs bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full mt-1">
+                            Duración: {srv.duration}
+                          </span>
+                        </div>
+                        <span className="font-extrabold text-indigo-600 text-lg">{srv.price}</span>
+                      </div>
+
+                      <p className="text-sm text-slate-600 mb-3">{srv.description}</p>
+
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                        {srv.features.map((feat, idx) => (
+                          <span key={idx} className="text-xs bg-white border border-slate-200 text-slate-600 px-2.5 py-1 rounded-lg flex items-center gap-1">
+                            <Check className="w-3 h-3 text-emerald-500" /> {feat}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                disabled={!selectedService}
+                onClick={() => setStep(2)}
+                className="w-full bg-indigo-600 text-white font-semibold py-4 rounded-xl disabled:opacity-50 hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-100"
+              >
+                Siguiente Paso <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+
+          {/* PASO 2: Selección de Fecha y Hora */}
+          {step === 2 && (
+            <div className="space-y-6 animate-in fade-in">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">2. Elige fecha y hora de atención</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Los horarios ocupados se deshabilitan automáticamente en tiempo real.
+                </p>
+              </div>
+
+              {/* Selector de Fecha */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-indigo-600" /> Selecciona la fecha
+                </label>
+                <input
+                  type="date"
+                  min={new Date().toISOString().split("T")[0]}
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full p-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 font-medium bg-slate-50/50"
+                />
+              </div>
+
+              {/* Selector de Hora */}
+              {selectedDate && (
+                <div className="pt-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-indigo-600" /> Horarios disponibles para {selectedDate}
+                  </label>
+
+                  {loadingAvailability ? (
+                    <div className="flex items-center justify-center py-8 text-slate-400 gap-2 text-sm">
+                      <Loader2 className="w-5 h-5 animate-spin text-indigo-600" /> Consultando agenda en tiempo real...
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {TIME_SLOTS.map((time) => {
+                        const isBooked = occupiedTimes.includes(time);
+                        const isSelected = selectedTime === time;
+
+                        return (
+                          <button
+                            key={time}
+                            type="button"
+                            disabled={isBooked}
+                            onClick={() => setSelectedTime(time)}
+                            className={`p-3.5 rounded-xl border text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                              isBooked
+                                ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed line-through"
+                                : isSelected
+                                ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100"
+                                : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30"
+                            }`}
+                          >
+                            <Clock className={`w-3.5 h-3.5 ${isSelected ? "text-white" : "text-slate-400"}`} />
+                            {time}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {!loadingAvailability && occupiedTimes.length > 0 && (
+                    <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
+                      <Info className="w-3.5 h-3.5 text-slate-400" /> Los horarios tachados ya han sido reservados por otros clientes.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="w-1/3 border border-slate-200 text-slate-700 font-semibold py-3.5 rounded-xl hover:bg-slate-50 transition flex items-center justify-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Atrás
+                </button>
+                <button
+                  type="button"
+                  disabled={!selectedDate || !selectedTime}
+                  onClick={() => setStep(3)}
+                  className="w-2/3 bg-indigo-600 text-white font-semibold py-3.5 rounded-xl disabled:opacity-50 hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-100"
+                >
+                  Siguiente Paso <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* PASO 3: Formulario del Cliente y Confirmación */}
+          {step === 3 && (
+            <form onSubmit={handleBooking} className="space-y-6 animate-in fade-in">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">3. Completa tus datos de contacto</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Enviaremos el resumen y confirmación de la cita a tu correo electrónico.
+                </p>
+              </div>
+
+              {/* Resumen de Selección */}
+              <div className="bg-indigo-50/60 p-4 rounded-2xl border border-indigo-100 text-sm space-y-2">
+                <div className="flex justify-between font-medium text-slate-800">
+                  <span>Servicio elegido:</span>
+                  <span className="font-bold text-indigo-700">{selectedService?.name}</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Fecha y Hora:</span>
+                  <span className="font-semibold text-slate-800">{selectedDate} a las {selectedTime}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2">
+                    <User className="w-4 h-4 text-indigo-600" /> Nombre completo *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej. Juan Pérez"
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    className="w-full p-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-indigo-600" /> Correo electrónico *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="ejemplo@correo.com"
+                    value={clientEmail}
+                    onChange={(e) => setClientEmail(e.target.value)}
+                    className="w-full p-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">
+                    Teléfono (Opcional)
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Ej. +1 (809) 555-0199"
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.target.value)}
+                    className="w-full p-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">
+                    Notas adicionales (Opcional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Comentarios sobre el caso o detalles de interés..."
+                    value={clientNotes}
+                    onChange={(e) => setClientNotes(e.target.value)}
+                    className="w-full p-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => setStep(2)}
+                  className="w-1/3 border border-slate-200 text-slate-700 font-semibold py-3.5 rounded-xl hover:bg-slate-50 transition flex items-center justify-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Atrás
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-2/3 bg-indigo-600 text-white font-semibold py-3.5 rounded-xl disabled:opacity-50 hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-100"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" /> Procesando...
+                    </>
+                  ) : (
+                    "Confirmar Cita"
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+
+        </div>
+      </div>
+    </main>
   );
 }
