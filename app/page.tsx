@@ -136,17 +136,13 @@ const [bookedSlots, setBookedSlots] = useState<string[]>([]);
         return;
       }
 
-  // Detectar dinámicamente el precio y la duración del servicio seleccionado
-      const dynamicPrice = selectedService?.price 
-        ? formatPrice(selectedService.price) 
-        : selectedService?.cost 
-        ? formatPrice(selectedService.cost) 
-        : "$25";
+ // Obtener precio y duración dinámicamente sin errores de TypeScript
+      const svc = selectedService as any;
+      const rawPrice = svc?.price ?? svc?.cost ?? 25;
+      const rawDuration = svc?.duration ?? svc?.time ?? svc?.duration_text ?? "30 min";
 
-      const dynamicDuration = selectedService?.duration 
-        || selectedService?.time 
-        || selectedService?.duration_text 
-        || "30 min";
+      const dynamicPrice = formatPrice(rawPrice);
+      const dynamicDuration = String(rawDuration);
 
       const { error } = await supabase.from("appointments").insert([
         {
@@ -154,9 +150,9 @@ const [bookedSlots, setBookedSlots] = useState<string[]>([]);
           client_email: formData.email.trim(),
           client_phone: formData.phone.trim(),
           service_name: selectedService?.name || "Consulta Inicial / Valoración",
-          duration: String(dynamicDuration),
-          price: String(dynamicPrice),
-          service_price: String(dynamicPrice),
+          duration: dynamicDuration,
+          price: dynamicPrice,
+          service_price: dynamicPrice,
           appointment_date: selectedDate,
           appointment_time: selectedTime,
           status: "pending",
