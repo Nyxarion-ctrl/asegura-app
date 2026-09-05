@@ -143,6 +143,8 @@ const [bookedSlots, setBookedSlots] = useState<string[]>([]);
           client_email: formData.email.trim(),
           client_phone: formData.phone.trim(),
           service_name: selectedService.name,
+          duration: selectedService.duration || "30 min",
+          price: formatPrice(selectedService.price),
           service_price: formatPrice(selectedService.price),
           appointment_date: selectedDate,
           appointment_time: selectedTime,
