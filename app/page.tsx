@@ -138,7 +138,7 @@ const [bookedSlots, setBookedSlots] = useState<string[]>([]);
 
      // Guardar la cita asegurando valores por defecto para duration y price
       const servicePrice = formatPrice(selectedService.price);
-      const serviceDuration = selectedService.duration || selectedService.duration_time || "30 min";
+      const serviceDuration = selectedService.duration || "30 min";
 
       const { error } = await supabase.from("appointments").insert([
         {
