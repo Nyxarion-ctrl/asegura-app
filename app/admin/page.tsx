@@ -8,6 +8,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Define tu clave de administrador aquí (o en variables de entorno)
+const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "1234";
+
 interface Appointment {
   id: string;
   client_name: string;
@@ -22,9 +25,40 @@ interface Appointment {
 }
 
 export default function AdminPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
+
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"ALL" | "PENDING" | "CONFIRMED" | "CANCELLED">("ALL");
+
+  // Verificar si ya inició sesión previamente
+  useEffect(() => {
+    const savedAuth = localStorage.getItem("admin_authenticated");
+    if (savedAuth === "true") {
+      setIsAuthenticated(true);
+      fetchAppointments();
+    }
+  }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pinInput === ADMIN_PIN) {
+      setIsAuthenticated(true);
+      setPinError(false);
+      localStorage.setItem("admin_authenticated", "true");
+      fetchAppointments();
+    } else {
+      setPinError(true);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("admin_authenticated");
+    setIsAuthenticated(false);
+    setPinInput("");
+  };
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -56,10 +90,6 @@ export default function AdminPage() {
     }
   };
 
-  useEffect(() => {
-    fetchAppointments();
-  }, []);
-
   // Filtrar citas según la pestaña seleccionada
   const filteredAppointments = appointments.filter((item) => {
     const status = (item.status || "pending").toLowerCase();
@@ -69,6 +99,52 @@ export default function AdminPage() {
     return true;
   });
 
+  // --- PANTALLA DE BLOQUEO / LOGIN ---
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans">
+        <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 text-center">
+          <div className="flex justify-center mb-6">
+            <Logo />
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Acceso Administrador</h2>
+          <p className="text-xs text-slate-500 mb-6">
+            Ingresa tu PIN o contraseña de acceso para gestionar las citas.
+          </p>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                placeholder="Ingresa tu clave"
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl border text-center text-lg tracking-widest outline-none transition-all ${
+                  pinError
+                    ? "border-rose-500 bg-rose-50/50 text-rose-900"
+                    : "border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                }`}
+              />
+              {pinError && (
+                <p className="text-[11px] text-rose-500 font-semibold mt-2">
+                  Clave incorrecta. Inténtalo de nuevo.
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-200 transition-all"
+            >
+              Ingresar al Panel
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // --- PANEL DE ADMINISTRACIÓN ---
   return (
     <div className="min-h-screen bg-slate-50/50 bg-grid-pattern text-slate-900 flex flex-col font-sans">
       {/* Header Admin */}
@@ -80,12 +156,20 @@ export default function AdminPage() {
               Admin
             </span>
           </div>
-          <button
-            onClick={fetchAppointments}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition-all flex items-center gap-1.5"
-          >
-            🔄 Actualizar Tabla
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchAppointments}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition-all flex items-center gap-1.5"
+            >
+              🔄 Actualizar
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition-all"
+            >
+              Salir
+            </button>
+          </div>
         </div>
       </header>
 
