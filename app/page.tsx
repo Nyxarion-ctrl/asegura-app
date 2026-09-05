@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
 import { createClient } from "@supabase/supabase-js";
 
-// Inicializar cliente de Supabase
+// Inicializar cliente de Supabase (fuera del componente para evitar re-instanciaciones)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -31,8 +31,13 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Fecha mínima para el input de fecha (hoy en formato YYYY-MM-DD)
+  const todayDateStr = new Date().toISOString().split("T")[0];
+
   // Cargar servicios dinámicamente desde Supabase
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchServices() {
       try {
         setLoadingServices(true);
@@ -43,18 +48,22 @@ export default function Home() {
 
         if (error) throw error;
 
-        if (data && data.length > 0) {
+        if (isMounted && data && data.length > 0) {
           setServices(data);
           setSelectedService(data[0]);
         }
       } catch (err: any) {
         console.error("Error al cargar servicios desde Supabase:", err);
       } finally {
-        setLoadingServices(false);
+        if (isMounted) setLoadingServices(false);
       }
     }
 
     fetchServices();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Formatear precio para evitar inconsistencias
@@ -64,9 +73,22 @@ export default function Home() {
     return price.startsWith("$") ? price : `$${price}`;
   };
 
+  // Resetear el formulario para una nueva cita
+  const handleReset = () => {
+    setIsSubmitted(false);
+    setStep(1);
+    setSelectedDate("");
+    setSelectedTime("");
+    setFormData({ name: "", email: "", phone: "" });
+    setErrorMessage("");
+    if (services.length > 0) {
+      setSelectedService(services[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedService) return;
+    if (!selectedService || !selectedDate || !selectedTime) return;
 
     setIsLoading(true);
     setErrorMessage("");
@@ -75,9 +97,9 @@ export default function Home() {
       // Guardar cita en Supabase
       const { error } = await supabase.from("appointments").insert([
         {
-          client_name: formData.name,
-          client_email: formData.email,
-          client_phone: formData.phone,
+          client_name: formData.name.trim(),
+          client_email: formData.email.trim(),
+          client_phone: formData.phone.trim(),
           service_name: selectedService.name,
           service_price: formatPrice(selectedService.price),
           appointment_date: selectedDate,
@@ -90,7 +112,9 @@ export default function Home() {
       setIsSubmitted(true);
     } catch (err: any) {
       console.error("Error al guardar cita:", err);
-      setErrorMessage("No se pudo guardar la cita. Inténtalo de nuevo.");
+      setErrorMessage(
+        err?.message || "No se pudo guardar la cita. Inténtalo de nuevo."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -187,7 +211,7 @@ export default function Home() {
                   <button
                     disabled={!selectedService}
                     onClick={() => setStep(2)}
-                    className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-all text-sm shadow-md shadow-indigo-500/10"
+                    className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-all text-sm shadow-md shadow-indigo-500/10 cursor-pointer disabled:cursor-not-allowed"
                   >
                     Continuar a Fecha y Hora &rarr;
                   </button>
@@ -203,6 +227,7 @@ export default function Home() {
                     <label className="block text-xs font-semibold text-slate-700 mb-2">Fecha</label>
                     <input
                       type="date"
+                      min={todayDateStr}
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
                       className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
@@ -241,7 +266,7 @@ export default function Home() {
                       type="button"
                       disabled={!selectedDate || !selectedTime}
                       onClick={() => setStep(3)}
-                      className="w-2/3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-all text-sm shadow-md shadow-indigo-500/10"
+                      className="w-2/3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-all text-sm shadow-md shadow-indigo-500/10 cursor-pointer disabled:cursor-not-allowed"
                     >
                       Continuar a tus Datos &rarr;
                     </button>
@@ -307,9 +332,16 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-2/3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all text-sm shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2"
+                      className="w-2/3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all text-sm shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
                     >
-                      {isLoading ? "Guardando..." : "Confirmar Cita"}
+                      {isLoading ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                          <span>Guardando...</span>
+                        </>
+                      ) : (
+                        "Confirmar Cita"
+                      )}
                     </button>
                   </div>
                 </form>
@@ -377,11 +409,8 @@ export default function Home() {
               <p><span className="text-slate-400">Contacto:</span> <strong className="text-slate-700">{formData.email}</strong></p>
             </div>
             <button
-              onClick={() => {
-                setIsSubmitted(false);
-                setStep(1);
-              }}
-              className="mt-6 w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl text-sm transition-all"
+              onClick={handleReset}
+              className="mt-6 w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl text-sm transition-all cursor-pointer"
             >
               Realizar Otra Reserva
             </button>
