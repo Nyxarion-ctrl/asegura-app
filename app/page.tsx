@@ -136,16 +136,19 @@ const [bookedSlots, setBookedSlots] = useState<string[]>([]);
         return;
       }
 
-      // Guardar la cita si está disponible
+     // Guardar la cita asegurando valores por defecto para duration y price
+      const servicePrice = formatPrice(selectedService.price);
+      const serviceDuration = selectedService.duration || selectedService.duration_time || "30 min";
+
       const { error } = await supabase.from("appointments").insert([
         {
           client_name: formData.name.trim(),
           client_email: formData.email.trim(),
           client_phone: formData.phone.trim(),
           service_name: selectedService.name,
-          duration: selectedService.duration || "30 min",
-          price: formatPrice(selectedService.price),
-          service_price: formatPrice(selectedService.price),
+          duration: serviceDuration,
+          price: servicePrice,
+          service_price: servicePrice,
           appointment_date: selectedDate,
           appointment_time: selectedTime,
           status: "pending",
