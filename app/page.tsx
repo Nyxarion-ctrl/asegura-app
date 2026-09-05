@@ -29,8 +29,43 @@ export default function Home() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
+const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const todayDateStr = new Date().toISOString().split("T")[0];
+  useEffect(() => {
+    if (!selectedDate) {
+      setBookedSlots([]);
+      return;
+    }
+
+    let isMounted = true;
+    async function fetchBookedSlots() {
+      try {
+        setLoadingSlots(true);
+        const { data, error } = await supabase
+          .from("appointments")
+          .select("appointment_time")
+          .eq("appointment_date", selectedDate)
+          .neq("status", "cancelled");
+
+        if (error) throw error;
+
+        if (isMounted && data) {
+          const slots = data.map((item: { appointment_time: string }) => item.appointment_time);
+          setBookedSlots(slots);
+        }
+      } catch (err) {
+        console.error("Error al obtener horarios ocupados:", err);
+      } finally {
+        if (isMounted) setLoadingSlots(false);
+      }
+    }
+
+    fetchBookedSlots();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedDate]);
 
   useEffect(() => {
     let isMounted = true;
@@ -76,7 +111,7 @@ export default function Home() {
     if (services.length > 0) setSelectedService(services[0]);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedService || !selectedDate || !selectedTime) return;
 
@@ -84,6 +119,24 @@ export default function Home() {
     setErrorMessage("");
 
     try {
+      // Verificar si el horario sigue libre justo antes de guardar
+      const { data: existing, error: checkError } = await supabase
+        .from("appointments")
+        .select("id")
+        .eq("appointment_date", selectedDate)
+        .eq("appointment_time", selectedTime)
+        .neq("status", "cancelled");
+
+      if (checkError) throw checkError;
+
+      if (existing && existing.length > 0) {
+        setErrorMessage("El horario seleccionado acaba de ser reservado por otro cliente. Por favor, elige otro.");
+        setStep(2);
+        setIsLoading(false);
+        return;
+      }
+
+      // Guardar la cita si está disponible
       const { error } = await supabase.from("appointments").insert([
         {
           client_name: formData.name.trim(),
@@ -243,27 +296,38 @@ export default function Home() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Horarios Disponibles</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                      {TIME_SLOTS.map((slot) => {
-                        const isSelected = selectedTime === slot;
-                        return (
-                          <button
-                            key={slot}
-                            type="button"
-                            onClick={() => setSelectedTime(slot)}
-                            className={`p-3 rounded-xl text-xs font-bold border-2 transition-all cursor-pointer ${
-                              isSelected
-                                ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-[1.02]"
-                                : "border-slate-100 hover:border-slate-300 text-slate-700 bg-white"
-                            }`}
-                          >
-                            {slot}
-                          </button>
-                        );
-                      })}
-                    </div>
+                 <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-2">
+            Horarios Disponibles {loadingSlots && <span className="text-slate-400 font-normal">(Cargando disponibilidad...)</span>}
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            {TIME_SLOTS.map((slot) => {
+              const isSelected = selectedTime === slot;
+              const isBooked = bookedSlots.includes(slot);
+
+              return (
+                <button
+                  key={slot}
+                  type="button"
+                  disabled={isBooked || loadingSlots}
+                  onClick={() => setSelectedTime(slot)}
+                  className={`p-3 rounded-xl text-xs font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${
+                    isBooked
+                      ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+                      : isSelected
+                      ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-[1.02] cursor-pointer"
+                      : "border-slate-100 hover:border-slate-300 text-slate-700 bg-white cursor-pointer"
+                  }`}
+                >
+                  <span>{slot}</span>
+                  {isBooked && (
+                    <span className="text-[10px] font-normal text-red-500">Ocupado</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
                   </div>
 
                   <div className="flex gap-3 pt-2">
