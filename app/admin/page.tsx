@@ -88,7 +88,6 @@ export default function AdminPage() {
     }
   };
 
-  // Eliminar una cita individual
   const deleteAppointment = async (id: string) => {
     if (!confirm("¿Estás seguro de que deseas eliminar esta cita permanentemente?")) return;
 
@@ -104,7 +103,6 @@ export default function AdminPage() {
     }
   };
 
-  // Eliminar todas las citas canceladas
   const clearCancelledAppointments = async () => {
     if (!confirm("¿Deseas eliminar permanentemente TODAS las citas canceladas?")) return;
 
@@ -191,7 +189,10 @@ export default function AdminPage() {
               onClick={fetchAppointments}
               className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition-all flex items-center gap-1.5"
             >
-              🔄 Actualizar
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Actualizar
             </button>
             <button
               onClick={handleLogout}
@@ -215,12 +216,15 @@ export default function AdminPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={clearCancelledAppointments}
-              className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+              className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
             >
-              🗑️ Limpiar Canceladas
+              <svg className="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Limpiar Canceladas
             </button>
             <div className="px-4 py-2 bg-white rounded-xl border border-slate-200/80 shadow-sm text-xs font-medium">
-              Total Citas: <span className="font-bold text-slate-900">{filteredAppointments.length}</span>
+              Total Citas: <span className="font-bold text-indigo-600">{filteredAppointments.length}</span>
             </div>
           </div>
         </div>
@@ -238,7 +242,7 @@ export default function AdminPage() {
               onClick={() => setFilter(tab.id as any)}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 filter === tab.id
-                  ? "bg-slate-900 text-white shadow-sm"
+                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
                   : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
               }`}
             >
@@ -248,7 +252,7 @@ export default function AdminPage() {
         </div>
 
         {/* Tabla de Citas */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-premium overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
           {loading ? (
             <div className="p-12 text-center text-sm text-slate-400">Cargando citas...</div>
           ) : filteredAppointments.length === 0 ? (
@@ -259,7 +263,7 @@ export default function AdminPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     <th className="p-4">Cliente</th>
                     <th className="p-4">Servicio</th>
                     <th className="p-4">Fecha y Hora</th>
@@ -273,7 +277,7 @@ export default function AdminPage() {
                     const currentStatus = (item.status || "pending").toLowerCase();
 
                     return (
-                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="p-4">
                           <p className="font-bold text-slate-900">{item.client_name}</p>
                           <p className="text-slate-400 text-[11px]">{item.client_email}</p>
@@ -281,47 +285,60 @@ export default function AdminPage() {
                         </td>
                         <td className="p-4 font-medium text-slate-800">{item.service_name}</td>
                         <td className="p-4">
-                          <p className="font-medium text-slate-900">{item.appointment_date}</p>
+                          <p className="font-semibold text-slate-900">{item.appointment_date}</p>
                           <p className="text-slate-400 text-[11px]">{item.appointment_time}</p>
                         </td>
-                        <td className="p-4 font-bold text-slate-900">{item.service_price}</td>
+                        <td className="p-4 font-extrabold text-slate-900">{item.service_price}</td>
                         <td className="p-4">
                           <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1.5 ${
                               currentStatus === "confirmed"
-                                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                 : currentStatus === "cancelled"
-                                ? "bg-rose-100 text-rose-800 border border-rose-200"
-                                : "bg-amber-100 text-amber-800 border border-amber-200"
+                                ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                : "bg-amber-50 text-amber-700 border border-amber-200"
                             }`}
                           >
-                            {item.status || "pending"}
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                currentStatus === "confirmed"
+                                  ? "bg-emerald-500"
+                                  : currentStatus === "cancelled"
+                                  ? "bg-rose-500"
+                                  : "bg-amber-500"
+                              }`}
+                            />
+                            {item.status || "PENDING"}
                           </span>
                         </td>
-                        <td className="p-4 text-right space-x-2">
-                          {currentStatus !== "confirmed" && (
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {currentStatus !== "confirmed" && (
+                              <button
+                                onClick={() => updateStatus(item.id, "CONFIRMED")}
+                                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-bold shadow-sm shadow-indigo-100 transition-all"
+                              >
+                                Confirmar
+                              </button>
+                            )}
+                            {currentStatus !== "cancelled" && (
+                              <button
+                                onClick={() => updateStatus(item.id, "CANCELLED")}
+                                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[11px] font-semibold transition-all"
+                              >
+                                Cancelar
+                              </button>
+                            )}
                             <button
-                              onClick={() => updateStatus(item.id, "CONFIRMED")}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-medium transition-all"
+                              onClick={() => deleteAppointment(item.id)}
+                              title="Eliminar registro"
+                              className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl transition-all border border-slate-200 hover:border-rose-200"
                             >
-                              Confirmar
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
                             </button>
-                          )}
-                          {currentStatus !== "cancelled" && (
-                            <button
-                              onClick={() => updateStatus(item.id, "CANCELLED")}
-                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[11px] font-medium transition-all"
-                            >
-                              Cancelar
-                            </button>
-                          )}
-                          <button
-                            onClick={() => deleteAppointment(item.id)}
-                            title="Eliminar cita"
-                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-medium transition-all border border-rose-200"
-                          >
-                            🗑️
-                          </button>
+                          </div>
                         </td>
                       </tr>
                     );
