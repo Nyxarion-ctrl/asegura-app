@@ -325,12 +325,11 @@ const [bookedSlots, setBookedSlots] = useState<string[]>([]);
                   )}
                 </button>
               );
-            })}
-          </div>
+         })}
         </div>
-                  </div>
+      </div>
 
-                  <div className="flex gap-3 pt-2">
+      <div className="flex gap-3 pt-2">
                     <button
                       type="button"
                       onClick={() => setStep(1)}
