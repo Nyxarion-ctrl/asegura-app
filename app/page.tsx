@@ -50,7 +50,7 @@ export default function Home() {
         }
       } catch (err) {
         console.error("Error al cargar servicios:", err);
-      } font-medium {
+      } finally {
         if (isMounted) setLoadingServices(false);
       }
     }
