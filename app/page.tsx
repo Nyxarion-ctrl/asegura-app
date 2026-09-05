@@ -136,19 +136,27 @@ const [bookedSlots, setBookedSlots] = useState<string[]>([]);
         return;
       }
 
-   // Asignar datos con valores de respaldo garantizados
-      const servicePrice = selectedService?.price ? `$${selectedService.price}` : "$25";
-      const serviceDuration = selectedService?.duration || "30 min";
+  // Detectar dinámicamente el precio y la duración del servicio seleccionado
+      const dynamicPrice = selectedService?.price 
+        ? formatPrice(selectedService.price) 
+        : selectedService?.cost 
+        ? formatPrice(selectedService.cost) 
+        : "$25";
+
+      const dynamicDuration = selectedService?.duration 
+        || selectedService?.time 
+        || selectedService?.duration_text 
+        || "30 min";
 
       const { error } = await supabase.from("appointments").insert([
         {
           client_name: formData.name.trim(),
           client_email: formData.email.trim(),
           client_phone: formData.phone.trim(),
-          service_name: selectedService?.name || "Consulta Inicial",
-          duration: String(serviceDuration),
-          price: String(servicePrice),
-          service_price: String(servicePrice),
+          service_name: selectedService?.name || "Consulta Inicial / Valoración",
+          duration: String(dynamicDuration),
+          price: String(dynamicPrice),
+          service_price: String(dynamicPrice),
           appointment_date: selectedDate,
           appointment_time: selectedTime,
           status: "pending",
