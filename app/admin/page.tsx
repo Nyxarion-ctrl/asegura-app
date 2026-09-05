@@ -8,7 +8,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Define tu clave de administrador aquí (o en variables de entorno)
 const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "1234";
 
 interface Appointment {
@@ -33,7 +32,6 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"ALL" | "PENDING" | "CONFIRMED" | "CANCELLED">("ALL");
 
-  // Verificar si ya inició sesión previamente
   useEffect(() => {
     const savedAuth = localStorage.getItem("admin_authenticated");
     if (savedAuth === "true") {
@@ -90,7 +88,41 @@ export default function AdminPage() {
     }
   };
 
-  // Filtrar citas según la pestaña seleccionada
+  // Eliminar una cita individual
+  const deleteAppointment = async (id: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar esta cita permanentemente?")) return;
+
+    const { error } = await supabase
+      .from("appointments")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert("Error al eliminar la cita: " + error.message);
+    } else {
+      setAppointments((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
+
+  // Eliminar todas las citas canceladas
+  const clearCancelledAppointments = async () => {
+    if (!confirm("¿Deseas eliminar permanentemente TODAS las citas canceladas?")) return;
+
+    const { error } = await supabase
+      .from("appointments")
+      .delete()
+      .ilike("status", "cancelled");
+
+    if (error) {
+      alert("Error al limpiar citas canceladas: " + error.message);
+    } else {
+      setAppointments((prev) =>
+        prev.filter((item) => (item.status || "").toLowerCase() !== "cancelled")
+      );
+      alert("Citas canceladas eliminadas correctamente.");
+    }
+  };
+
   const filteredAppointments = appointments.filter((item) => {
     const status = (item.status || "pending").toLowerCase();
     if (filter === "PENDING") return status === "pending";
@@ -99,7 +131,6 @@ export default function AdminPage() {
     return true;
   });
 
-  // --- PANTALLA DE BLOQUEO / LOGIN ---
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans">
@@ -144,7 +175,6 @@ export default function AdminPage() {
     );
   }
 
-  // --- PANEL DE ADMINISTRACIÓN ---
   return (
     <div className="min-h-screen bg-slate-50/50 bg-grid-pattern text-slate-900 flex flex-col font-sans">
       {/* Header Admin */}
@@ -183,6 +213,12 @@ export default function AdminPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={clearCancelledAppointments}
+              className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              🗑️ Limpiar Canceladas
+            </button>
             <div className="px-4 py-2 bg-white rounded-xl border border-slate-200/80 shadow-sm text-xs font-medium">
               Total Citas: <span className="font-bold text-slate-900">{filteredAppointments.length}</span>
             </div>
@@ -229,7 +265,7 @@ export default function AdminPage() {
                     <th className="p-4">Fecha y Hora</th>
                     <th className="p-4">Precio</th>
                     <th className="p-4">Estado</th>
-                    <th className="p-4 text-right">Acción</th>
+                    <th className="p-4 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
@@ -279,6 +315,13 @@ export default function AdminPage() {
                               Cancelar
                             </button>
                           )}
+                          <button
+                            onClick={() => deleteAppointment(item.id)}
+                            title="Eliminar cita"
+                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-medium transition-all border border-rose-200"
+                          >
+                            🗑️
+                          </button>
                         </td>
                       </tr>
                     );
