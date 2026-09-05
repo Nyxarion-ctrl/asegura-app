@@ -24,6 +24,7 @@ interface Appointment {
 export default function AdminPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"ALL" | "PENDING" | "CONFIRMED" | "CANCELLED">("ALL");
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -49,7 +50,6 @@ export default function AdminPage() {
     if (error) {
       alert("Error al actualizar el estado: " + error.message);
     } else {
-      // Actualización optimista de la UI
       setAppointments((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
       );
@@ -59,6 +59,15 @@ export default function AdminPage() {
   useEffect(() => {
     fetchAppointments();
   }, []);
+
+  // Filtrar citas según la pestaña seleccionada
+  const filteredAppointments = appointments.filter((item) => {
+    const status = (item.status || "pending").toLowerCase();
+    if (filter === "PENDING") return status === "pending";
+    if (filter === "CONFIRMED") return status === "confirmed";
+    if (filter === "CANCELLED") return status === "cancelled";
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50/50 bg-grid-pattern text-slate-900 flex flex-col font-sans">
@@ -82,7 +91,7 @@ export default function AdminPage() {
 
       {/* Panel Contenido */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-extrabold text-slate-900">Gestión de Citas</h1>
             <p className="text-xs text-slate-500 mt-1">
@@ -91,18 +100,40 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-2">
             <div className="px-4 py-2 bg-white rounded-xl border border-slate-200/80 shadow-sm text-xs font-medium">
-              Total Citas: <span className="font-bold text-slate-900">{appointments.length}</span>
+              Total Citas: <span className="font-bold text-slate-900">{filteredAppointments.length}</span>
             </div>
           </div>
+        </div>
+
+        {/* Pestañas de Filtro */}
+        <div className="flex items-center gap-2 mb-6 border-b border-slate-200 pb-3 overflow-x-auto">
+          {[
+            { id: "ALL", label: "Todas" },
+            { id: "PENDING", label: "Pendientes" },
+            { id: "CONFIRMED", label: "Confirmadas" },
+            { id: "CANCELLED", label: "Canceladas" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFilter(tab.id as any)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                filter === tab.id
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Tabla de Citas */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-premium overflow-hidden">
           {loading ? (
             <div className="p-12 text-center text-sm text-slate-400">Cargando citas...</div>
-          ) : appointments.length === 0 ? (
+          ) : filteredAppointments.length === 0 ? (
             <div className="p-12 text-center text-sm text-slate-500">
-              No hay citas registradas en el sistema aún.
+              No hay citas registradas en esta categoría.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -118,7 +149,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
-                  {appointments.map((item) => {
+                  {filteredAppointments.map((item) => {
                     const currentStatus = (item.status || "pending").toLowerCase();
 
                     return (
