@@ -434,7 +434,6 @@ const todayDateStr = new Date().toISOString().split("T")[0];
                     </button>
                   </div>
                 </form>
-              )}
             </div>
 
             {/* Tarjeta de Resumen Flotante Dinámica */}
