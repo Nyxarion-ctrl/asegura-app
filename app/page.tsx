@@ -362,7 +362,6 @@ const todayDateStr = new Date().toISOString().split("T")[0];
                     </button>
                   </div>
                 </div>
-              )}
 
               {/* Paso 3: Contacto y Confirmación */}
               {step === 3 && (
