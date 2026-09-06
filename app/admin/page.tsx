@@ -42,6 +42,7 @@ export default function AdminPage() {
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"ALL" | "PENDING" | "CONFIRMED" | "CANCELLED">("ALL");
+  const [searchQuery, setSearchQuery] = useState(""); // <-- NUEVO: Estado para el buscador
 
   // Formulario para nuevo bloqueo
   const [newBlockDate, setNewBlockDate] = useState("");
@@ -112,6 +113,8 @@ export default function AdminPage() {
       setAppointments((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
       );
+    } else {
+      alert("Error al actualizar el estado: " + error.message);
     }
   };
 
@@ -190,12 +193,26 @@ export default function AdminPage() {
     }
   };
 
+  // NUEVO: Filtrado combinado por Categoría y Búsqueda por texto
   const filteredAppointments = appointments.filter((item) => {
     const status = (item.status || "pending").toLowerCase();
-    if (filter === "PENDING") return status === "pending";
-    if (filter === "CONFIRMED") return status === "confirmed";
-    if (filter === "CANCELLED") return status === "cancelled";
-    return true;
+    
+    // Filtro por Estado
+    let matchesStatus = true;
+    if (filter === "PENDING") matchesStatus = status === "pending";
+    if (filter === "CONFIRMED") matchesStatus = status === "confirmed";
+    if (filter === "CANCELLED") matchesStatus = status === "cancelled";
+
+    // Filtro por Búsqueda
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      query === "" ||
+      (item.client_name || "").toLowerCase().includes(query) ||
+      (item.client_email || "").toLowerCase().includes(query) ||
+      (item.client_phone || "").includes(query) ||
+      (item.service_name || "").toLowerCase().includes(query);
+
+    return matchesStatus && matchesSearch;
   });
 
   if (!isAuthenticated) {
@@ -232,7 +249,7 @@ export default function AdminPage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-200 transition-all"
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-200 transition-all cursor-pointer"
             >
               Ingresar al Panel
             </button>
@@ -256,7 +273,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={fetchData}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition-all flex items-center gap-1.5"
+              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -265,7 +282,7 @@ export default function AdminPage() {
             </button>
             <button
               onClick={handleLogout}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition-all"
+              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition-all cursor-pointer"
             >
               Salir
             </button>
@@ -279,7 +296,7 @@ export default function AdminPage() {
         <div className="flex items-center gap-3 mb-8">
           <button
             onClick={() => setActiveTab("APPOINTMENTS")}
-            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
               activeTab === "APPOINTMENTS"
                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
@@ -289,7 +306,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab("BLOCKS")}
-            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
               activeTab === "BLOCKS"
                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
@@ -311,7 +328,7 @@ export default function AdminPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={clearCancelledAppointments}
-                  className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+                  className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer"
                 >
                   <svg className="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -324,26 +341,48 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Pestañas de Filtro */}
-            <div className="flex items-center gap-2 mb-6 border-b border-slate-200 pb-3 overflow-x-auto">
-              {[
-                { id: "ALL", label: "Todas" },
-                { id: "PENDING", label: "Pendientes" },
-                { id: "CONFIRMED", label: "Confirmadas" },
-                { id: "CANCELLED", label: "Canceladas" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setFilter(tab.id as any)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    filter === tab.id
-                      ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
-                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
-                  }`}
+            {/* Controles: Buscador + Pestañas de Filtro */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6 items-stretch sm:items-center justify-between">
+              {/* Buscador Integrado */}
+              <div className="relative flex-1 max-w-md">
+                <input
+                  type="text"
+                  placeholder="Buscar por cliente, teléfono, email o servicio..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-white rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 shadow-sm"
+                />
+                <svg
+                  className="w-4 h-4 text-slate-400 absolute left-3 top-2.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  {tab.label}
-                </button>
-              ))}
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+
+              {/* Pestañas de Filtro por Estado */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                {[
+                  { id: "ALL", label: "Todas" },
+                  { id: "PENDING", label: "Pendientes" },
+                  { id: "CONFIRMED", label: "Confirmadas" },
+                  { id: "CANCELLED", label: "Canceladas" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setFilter(tab.id as any)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                      filter === tab.id
+                        ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
+                        : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Tabla de Citas */}
@@ -352,7 +391,7 @@ export default function AdminPage() {
                 <div className="p-12 text-center text-sm text-slate-400">Cargando citas...</div>
               ) : filteredAppointments.length === 0 ? (
                 <div className="p-12 text-center text-sm text-slate-500">
-                  No hay citas registradas en esta categoría.
+                  No hay citas registradas con estos criterios.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -411,7 +450,7 @@ export default function AdminPage() {
                                 <button
                                   onClick={() => sendWhatsAppNotification(item)}
                                   title="Enviar recordatorio por WhatsApp"
-                                  className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm"
+                                  className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer"
                                 >
                                   <svg className="w-3.5 h-3.5 fill-emerald-600" viewBox="0 0 24 24">
                                     <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
@@ -422,7 +461,7 @@ export default function AdminPage() {
                                 {currentStatus !== "confirmed" && (
                                   <button
                                     onClick={() => updateStatus(item.id, "CONFIRMED")}
-                                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-bold shadow-sm shadow-indigo-100 transition-all"
+                                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-bold shadow-sm shadow-indigo-100 transition-all cursor-pointer"
                                   >
                                     Confirmar
                                   </button>
@@ -430,7 +469,7 @@ export default function AdminPage() {
                                 {currentStatus !== "cancelled" && (
                                   <button
                                     onClick={() => updateStatus(item.id, "CANCELLED")}
-                                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[11px] font-semibold transition-all"
+                                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[11px] font-semibold transition-all cursor-pointer"
                                   >
                                     Cancelar
                                   </button>
@@ -438,7 +477,7 @@ export default function AdminPage() {
                                 <button
                                   onClick={() => deleteAppointment(item.id)}
                                   title="Eliminar registro"
-                                  className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl transition-all border border-slate-200 hover:border-rose-200"
+                                  className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl transition-all border border-slate-200 hover:border-rose-200 cursor-pointer"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -480,7 +519,7 @@ export default function AdminPage() {
                   <select
                     value={newBlockTime}
                     onChange={(e) => setNewBlockTime(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 bg-white"
                   >
                     <option value="ALL">Día Completo (Festivo/No laboral)</option>
                     <option value="09:00 AM">09:00 AM</option>
@@ -507,7 +546,7 @@ export default function AdminPage() {
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+                  className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
                 >
                   Guardar Bloqueo
                 </button>
@@ -533,7 +572,7 @@ export default function AdminPage() {
                       </div>
                       <button
                         onClick={() => handleDeleteBlock(slot.id)}
-                        className="px-3 py-1 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 rounded-lg text-[11px] font-medium transition-all"
+                        className="px-3 py-1 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 rounded-lg text-[11px] font-medium transition-all cursor-pointer"
                       >
                         Eliminar
                       </button>
