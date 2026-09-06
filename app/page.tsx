@@ -29,43 +29,39 @@ export default function Home() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-const [bookedSlots, setBookedSlots] = useState<string[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  const todayDateStr = new Date().toISOString().split("T")[0];
+const [reservedTimes, setReservedTimes] = useState<string[]>([]);
+const [blockedTimes, setBlockedTimes] = useState<string[]>([]);
+const [isDayBlocked, setIsDayBlocked] = useState(false);
+const [loadingSlots, setLoadingSlots] = useState(false);
+const todayDateStr = new Date().toISOString().split("T")[0];
   useEffect(() => {
     if (!selectedDate) {
-      setBookedSlots([]);
-      return;
+    setReservedTimes([]);
+    setBlockedTimes([]);
+    setIsDayBlocked(false);
+    return;
+  }
+
+  const checkAvailability = async () => {
+    setLoadingSlots(true);
+    setSelectedTime("");
+
+    try {
+      const res = await fetch(`/api/occupied-slots?date=${selectedDate}`);
+      const data = await res.json();
+
+      setReservedTimes(data.reservedTimes || []);
+      setBlockedTimes(data.blockedTimes || []);
+      setIsDayBlocked(data.isDayFullyBlocked || false);
+    } catch (err) {
+      console.error("Error al obtener disponibilidades:", err);
+    } finally {
+      setLoadingSlots(false);
     }
+  };
 
-    let isMounted = true;
-    async function fetchBookedSlots() {
-      try {
-        setLoadingSlots(true);
-        const { data, error } = await supabase
-          .from("appointments")
-          .select("appointment_time")
-          .eq("appointment_date", selectedDate)
-          .neq("status", "cancelled");
-
-        if (error) throw error;
-
-        if (isMounted && data) {
-          const slots = data.map((item: { appointment_time: string }) => item.appointment_time);
-          setBookedSlots(slots);
-        }
-      } catch (err) {
-        console.error("Error al obtener horarios ocupados:", err);
-      } finally {
-        if (isMounted) setLoadingSlots(false);
-      }
-    }
-
-    fetchBookedSlots();
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedDate]);
+  checkAvailability();
+}, [selectedDate]);
 
   useEffect(() => {
     let isMounted = true;
@@ -310,32 +306,40 @@ const [bookedSlots, setBookedSlots] = useState<string[]>([]);
             Horarios Disponibles {loadingSlots && <span className="text-slate-400 font-normal">(Cargando disponibilidad...)</span>}
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {TIME_SLOTS.map((slot) => {
-              const isSelected = selectedTime === slot;
-              const isBooked = bookedSlots.includes(slot);
+            {isDayBlocked ? (
+  <div className="col-span-full p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-medium text-center">
+    🚫 Esta fecha no está disponible para citas. Por favor selecciona otro día.
+  </div>
+) : (
+  TIME_SLOTS.map((slot) => {
+    const isSelected = selectedTime === slot;
+    const isReserved = reservedTimes.includes(slot);
+    const isBlocked = blockedTimes.includes(slot);
+    const isDisabled = isReserved || isBlocked || loadingSlots;
 
-              return (
-                <button
-                  key={slot}
-                  type="button"
-                  disabled={isBooked || loadingSlots}
-                  onClick={() => setSelectedTime(slot)}
-                  className={`p-3 rounded-xl text-xs font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${
-                    isBooked
-                      ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
-                      : isSelected
-                      ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-[1.02] cursor-pointer"
-                      : "border-slate-100 hover:border-slate-300 text-slate-700 bg-white cursor-pointer"
-                  }`}
-                >
-                  <span>{slot}</span>
-                  {isBooked && (
-                    <span className="text-[10px] font-normal text-red-500">Ocupado</span>
-                  )}
-                </button>
-              );
-         })}
-        </div>
+    return (
+      <button
+        key={slot}
+        type="button"
+        disabled={isDisabled}
+        onClick={() => setSelectedTime(slot)}
+        className={`p-3 rounded-xl text-xs font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${
+          isDisabled
+            ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+            : isSelected
+            ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-[1.02] cursor-pointer"
+            : "border-slate-100 hover:border-slate-300 text-slate-700 bg-white cursor-pointer"
+        }`}
+      >
+        <span>{slot}</span>
+        {isDisabled && (
+          <span className="text-[10px] font-normal text-red-500">
+            {isBlocked ? "Bloqueado" : "Ocupado"}
+          </span>
+        )}
+      </button>
+             );
+          })
       </div>
 
       <div className="flex gap-3 pt-2">
