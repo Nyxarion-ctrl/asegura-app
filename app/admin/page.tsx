@@ -42,7 +42,7 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinInput === ADMIN_PIN) {
+    if (pinInput.trim() === ADMIN_PIN.trim()) {
       setIsAuthenticated(true);
       setPinError(false);
       localStorage.setItem("admin_authenticated", "true");
@@ -73,7 +73,7 @@ export default function AdminPage() {
     setLoading(false);
   };
 
-  const updateStatus = async (id: string, newStatus: "CONFIRMED" | "CANCELLED" | "confirmed" | "cancelled") => {
+  const updateStatus = async (id: string, newStatus: "CONFIRMED" | "CANCELLED") => {
     const { error } = await supabase
       .from("appointments")
       .update({ status: newStatus })
