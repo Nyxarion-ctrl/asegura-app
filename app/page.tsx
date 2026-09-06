@@ -29,39 +29,41 @@ export default function Home() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-const [reservedTimes, setReservedTimes] = useState<string[]>([]);
-const [blockedTimes, setBlockedTimes] = useState<string[]>([]);
-const [isDayBlocked, setIsDayBlocked] = useState(false);
-const [loadingSlots, setLoadingSlots] = useState(false);
-const todayDateStr = new Date().toISOString().split("T")[0];
+  const [reservedTimes, setReservedTimes] = useState<string[]>([]);
+  const [blockedTimes, setBlockedTimes] = useState<string[]>([]);
+  const [isDayBlocked, setIsDayBlocked] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  
+  const todayDateStr = new Date().toISOString().split("T")[0];
+
   useEffect(() => {
     if (!selectedDate) {
-    setReservedTimes([]);
-    setBlockedTimes([]);
-    setIsDayBlocked(false);
-    return;
-  }
-
-  const checkAvailability = async () => {
-    setLoadingSlots(true);
-    setSelectedTime("");
-
-    try {
-      const res = await fetch(`/api/occupied-slots?date=${selectedDate}`);
-      const data = await res.json();
-
-      setReservedTimes(data.reservedTimes || []);
-      setBlockedTimes(data.blockedTimes || []);
-      setIsDayBlocked(data.isDayFullyBlocked || false);
-    } catch (err) {
-      console.error("Error al obtener disponibilidades:", err);
-    } finally {
-      setLoadingSlots(false);
+      setReservedTimes([]);
+      setBlockedTimes([]);
+      setIsDayBlocked(false);
+      return;
     }
-  };
 
-  checkAvailability();
-}, [selectedDate]);
+    const checkAvailability = async () => {
+      setLoadingSlots(true);
+      setSelectedTime("");
+
+      try {
+        const res = await fetch(`/api/occupied-slots?date=${selectedDate}`);
+        const data = await res.json();
+
+        setReservedTimes(data.reservedTimes || []);
+        setBlockedTimes(data.blockedTimes || []);
+        setIsDayBlocked(data.isDayFullyBlocked || false);
+      } catch (err) {
+        console.error("Error al obtener disponibilidades:", err);
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    checkAvailability();
+  }, [selectedDate]);
 
   useEffect(() => {
     let isMounted = true;
@@ -107,7 +109,7 @@ const todayDateStr = new Date().toISOString().split("T")[0];
     if (services.length > 0) setSelectedService(services[0]);
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedService || !selectedDate || !selectedTime) return;
 
@@ -115,7 +117,6 @@ const todayDateStr = new Date().toISOString().split("T")[0];
     setErrorMessage("");
 
     try {
-      // Verificar si el horario sigue libre justo antes de guardar
       const { data: existing, error: checkError } = await supabase
         .from("appointments")
         .select("id")
@@ -132,7 +133,6 @@ const todayDateStr = new Date().toISOString().split("T")[0];
         return;
       }
 
- // Obtener precio y duración dinámicamente sin errores de TypeScript
       const svc = selectedService as any;
       const rawPrice = svc?.price ?? svc?.cost ?? 25;
       const rawDuration = svc?.duration ?? svc?.time ?? svc?.duration_text ?? "30 min";
@@ -195,7 +195,7 @@ const todayDateStr = new Date().toISOString().split("T")[0];
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-7 bg-white rounded-3xl p-6 md:p-8 shadow-xl shadow-slate-200/50 border border-slate-200/80 transition-all">
               
-              {/* Stepper / Indicador de Pasos con Línea de Conexión */}
+              {/* Stepper */}
               <div className="relative flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
                 <div className="absolute top-4 left-6 right-6 h-0.5 bg-slate-100 -z-0"></div>
                 <div
@@ -301,50 +301,51 @@ const todayDateStr = new Date().toISOString().split("T")[0];
                     />
                   </div>
 
-                 <div>
-         <label className="block text-xs font-bold text-slate-700 mb-2">
-  Horarios Disponibles {loadingSlots && <span className="text-slate-400 font-normal">(Cargando disponibilidad...)</span>}
-</label>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-2">
+                      Horarios Disponibles {loadingSlots && <span className="text-slate-400 font-normal">(Cargando disponibilidad...)</span>}
+                    </label>
 
-<div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-  {isDayBlocked ? (
-    <div className="col-span-full p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-medium text-center">
-      🚫 Esta fecha no está disponible para citas. Por favor selecciona otro día.
-    </div>
-  ) : (
-    TIME_SLOTS.map((slot) => {
-      const isSelected = selectedTime === slot;
-      const isReserved = reservedTimes.includes(slot);
-      const isBlocked = blockedTimes.includes(slot);
-      const isDisabled = isReserved || isBlocked || loadingSlots;
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {isDayBlocked ? (
+                        <div className="col-span-full p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-medium text-center">
+                          🚫 Esta fecha no está disponible para citas. Por favor selecciona otro día.
+                        </div>
+                      ) : (
+                        TIME_SLOTS.map((slot) => {
+                          const isSelected = selectedTime === slot;
+                          const isReserved = reservedTimes.includes(slot);
+                          const isBlocked = blockedTimes.includes(slot);
+                          const isDisabled = isReserved || isBlocked || loadingSlots;
 
-      return (
-        <button
-          key={slot}
-          type="button"
-          disabled={isDisabled}
-          onClick={() => setSelectedTime(slot)}
-          className={`p-3 rounded-xl text-xs font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${
-            isDisabled
-              ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
-              : isSelected
-              ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-[1.02] cursor-pointer"
-              : "border-slate-100 hover:border-slate-300 text-slate-700 bg-white cursor-pointer"
-          }`}
-        >
-          <span>{slot}</span>
-          {isDisabled && (
-            <span className="text-[10px] font-normal text-red-500">
-              {isBlocked ? "Bloqueado" : "Ocupado"}
-            </span>
-          )}
-        </button>
-      );
-    })
-  )}
-</div>
+                          return (
+                            <button
+                              key={slot}
+                              type="button"
+                              disabled={isDisabled}
+                              onClick={() => setSelectedTime(slot)}
+                              className={`p-3 rounded-xl text-xs font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${
+                                isDisabled
+                                  ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+                                  : isSelected
+                                  ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-[1.02] cursor-pointer"
+                                  : "border-slate-100 hover:border-slate-300 text-slate-700 bg-white cursor-pointer"
+                              }`}
+                            >
+                              <span>{slot}</span>
+                              {isDisabled && (
+                                <span className="text-[10px] font-normal text-red-500">
+                                  {isBlocked ? "Bloqueado" : "Ocupado"}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
 
-      <div className="flex gap-3 pt-2">
+                  <div className="flex gap-3 pt-2">
                     <button
                       type="button"
                       onClick={() => setStep(1)}
@@ -362,6 +363,7 @@ const todayDateStr = new Date().toISOString().split("T")[0];
                     </button>
                   </div>
                 </div>
+              )}
 
               {/* Paso 3: Contacto y Confirmación */}
               {step === 3 && (
@@ -434,9 +436,10 @@ const todayDateStr = new Date().toISOString().split("T")[0];
                     </button>
                   </div>
                 </form>
+              )}
             </div>
 
-            {/* Tarjeta de Resumen Flotante Dinámica */}
+            {/* Tarjeta de Resumen Flotante */}
             <div className="lg:col-span-5 bg-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
