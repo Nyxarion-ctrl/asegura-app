@@ -302,45 +302,47 @@ const todayDateStr = new Date().toISOString().split("T")[0];
                   </div>
 
                  <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-2">
-            Horarios Disponibles {loadingSlots && <span className="text-slate-400 font-normal">(Cargando disponibilidad...)</span>}
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {isDayBlocked ? (
-  <div className="col-span-full p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-medium text-center">
-    🚫 Esta fecha no está disponible para citas. Por favor selecciona otro día.
-  </div>
-) : (
-  TIME_SLOTS.map((slot) => {
-    const isSelected = selectedTime === slot;
-    const isReserved = reservedTimes.includes(slot);
-    const isBlocked = blockedTimes.includes(slot);
-    const isDisabled = isReserved || isBlocked || loadingSlots;
+         <label className="block text-xs font-bold text-slate-700 mb-2">
+  Horarios Disponibles {loadingSlots && <span className="text-slate-400 font-normal">(Cargando disponibilidad...)</span>}
+</label>
 
-    return (
-      <button
-        key={slot}
-        type="button"
-        disabled={isDisabled}
-        onClick={() => setSelectedTime(slot)}
-        className={`p-3 rounded-xl text-xs font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${
-          isDisabled
-            ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
-            : isSelected
-            ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-[1.02] cursor-pointer"
-            : "border-slate-100 hover:border-slate-300 text-slate-700 bg-white cursor-pointer"
-        }`}
-      >
-        <span>{slot}</span>
-        {isDisabled && (
-          <span className="text-[10px] font-normal text-red-500">
-            {isBlocked ? "Bloqueado" : "Ocupado"}
-          </span>
-        )}
-      </button>
-             );
-          })
-      </div>
+<div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+  {isDayBlocked ? (
+    <div className="col-span-full p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-medium text-center">
+      🚫 Esta fecha no está disponible para citas. Por favor selecciona otro día.
+    </div>
+  ) : (
+    TIME_SLOTS.map((slot) => {
+      const isSelected = selectedTime === slot;
+      const isReserved = reservedTimes.includes(slot);
+      const isBlocked = blockedTimes.includes(slot);
+      const isDisabled = isReserved || isBlocked || loadingSlots;
+
+      return (
+        <button
+          key={slot}
+          type="button"
+          disabled={isDisabled}
+          onClick={() => setSelectedTime(slot)}
+          className={`p-3 rounded-xl text-xs font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${
+            isDisabled
+              ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+              : isSelected
+              ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-[1.02] cursor-pointer"
+              : "border-slate-100 hover:border-slate-300 text-slate-700 bg-white cursor-pointer"
+          }`}
+        >
+          <span>{slot}</span>
+          {isDisabled && (
+            <span className="text-[10px] font-normal text-red-500">
+              {isBlocked ? "Bloqueado" : "Ocupado"}
+            </span>
+          )}
+        </button>
+      );
+    })
+  )}
+</div>
 
       <div className="flex gap-3 pt-2">
                     <button
