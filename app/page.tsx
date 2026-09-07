@@ -1,400 +1,513 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
-import { Calendar, Clock, Car, Shield, CheckCircle2, User, Phone, FileText, ArrowRight } from 'lucide-react'
-import Link from 'next/link'
+import { useState, useEffect } from "react";
+import Logo from "@/components/Logo";
+import { createClient } from "@supabase/supabase-js";
 
-// Inicialización de Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Servicios predeterminados (puedes ajustar nombres y precios según tu cliente)
-const SERVICES = [
-  { id: '1', name: 'Inspección General de Seguridad', duration: '45 min', price: '$25.00' },
-  { id: '2', name: 'Revisión del Sistema de Frenos', duration: '30 min', price: '$20.00' },
-  { id: '3', name: 'Evaluación Técnica Completa', duration: '60 min', price: '$40.00' },
-]
+interface Service {
+  id: string;
+  name: string;
+  duration: string;
+  price: number | string;
+}
 
-// Horarios disponibles de trabajo
-const TIME_SLOTS = [
-  '08:00', '09:00', '10:00', '11:00',
-  '14:00', '15:00', '16:00', '17:00'
-]
+const TIME_SLOTS = ["09:00 AM", "10:30 AM", "01:00 PM", "03:00 PM", "04:30 PM"];
 
 export default function Home() {
-  const [selectedService, setSelectedService] = useState(SERVICES[0])
-  const [selectedDate, setSelectedDate] = useState('')
-  const [selectedTime, setSelectedTime] = useState('')
-  const [occupiedSlots, setOccupiedSlots] = useState<string[]>([])
-  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [step, setStep] = useState(1);
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [loadingServices, setLoadingServices] = useState(true);
 
-  // Datos del cliente
-  const [clientName, setClientName] = useState('')
-  const [clientPhone, setClientPhone] = useState('')
-  const [vehicleInfo, setVehicleInfo] = useState('')
-  const [notes, setNotes] = useState('')
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [reservedTimes, setReservedTimes] = useState<string[]>([]);
+  const [blockedTimes, setBlockedTimes] = useState<string[]>([]);
+  const [isDayBlocked, setIsDayBlocked] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  
+  const todayDateStr = new Date().toISOString().split("T")[0];
 
-  // Estados de interfaz
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [bookingSuccess, setBookingSuccess] = useState(false)
-
-  // Fecha mínima (hoy)
-  const today = new Date().toISOString().split('T')[0]
-
-  // Cargar horas ocupadas/bloqueadas cuando cambia la fecha seleccionada
   useEffect(() => {
-    if (!selectedDate) return
+    if (!selectedDate) {
+      setReservedTimes([]);
+      setBlockedTimes([]);
+      setIsDayBlocked(false);
+      return;
+    }
 
-    async function fetchOccupiedSlots() {
-      setLoadingSlots(true)
+    const checkAvailability = async () => {
+      setLoadingSlots(true);
+      setSelectedTime("");
+
       try {
-        // 1. Obtener citas agendadas que no estén canceladas
-        const { data: appointments } = await supabase
-          .from('appointments')
-          .select('time')
-          .eq('date', selectedDate)
-          .neq('status', 'cancelled')
+        const res = await fetch(`/api/occupied-slots?date=${selectedDate}`);
+        const data = await res.json();
 
-        // 2. Obtener bloqueos de disponibilidad
-        const { data: blocks } = await supabase
-          .from('blocked_slots')
-          .select('time')
-          .eq('date', selectedDate)
-
-        const appTimes = appointments ? appointments.map(a => a.time) : []
-        const blockTimes = blocks ? blocks.map(b => b.time) : []
-
-        // Unir ambas listas de horarios no disponibles
-        setOccupiedSlots([...appTimes, ...blockTimes])
+        setReservedTimes(data.reservedTimes || []);
+        setBlockedTimes(data.blockedTimes || []);
+        setIsDayBlocked(data.isDayFullyBlocked || false);
       } catch (err) {
-        console.error('Error al cargar disponibilidad:', err)
+        console.error("Error al obtener disponibilidades:", err);
       } finally {
-        setLoadingSlots(false)
+        setLoadingSlots(false);
+      }
+    };
+
+    checkAvailability();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchServices() {
+      try {
+        setLoadingServices(true);
+        const { data, error } = await supabase
+          .from("services")
+          .select("*")
+          .order("price", { ascending: true });
+
+        if (error) throw error;
+
+        if (isMounted && data && data.length > 0) {
+          setServices(data);
+          setSelectedService(data[0]);
+        }
+      } catch (err) {
+        console.error("Error al cargar servicios:", err);
+      } finally {
+        if (isMounted) setLoadingServices(false);
       }
     }
+    fetchServices();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-    fetchOccupiedSlots()
-  }, [selectedDate])
+  const formatPrice = (price: number | string | undefined) => {
+    if (price === undefined || price === null) return "$0";
+    if (typeof price === "number") return `$${price}`;
+    return price.startsWith("$") ? price : `$${price}`;
+  };
 
-  const handleBookingSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+  const handleReset = () => {
+    setIsSubmitted(false);
+    setStep(1);
+    setSelectedDate("");
+    setSelectedTime("");
+    setFormData({ name: "", email: "", phone: "" });
+    setErrorMessage("");
+    if (services.length > 0) setSelectedService(services[0]);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedService || !selectedDate || !selectedTime) return;
+
+    setIsLoading(true);
+    setErrorMessage("");
 
     try {
-      const { error } = await supabase.from('appointments').insert([
+      const { data: existing, error: checkError } = await supabase
+        .from("appointments")
+        .select("id")
+        .eq("appointment_date", selectedDate)
+        .eq("appointment_time", selectedTime)
+        .neq("status", "cancelled");
+
+      if (checkError) throw checkError;
+
+      if (existing && existing.length > 0) {
+        setErrorMessage("El horario seleccionado acaba de ser reservado por otro cliente. Por favor, elige otro.");
+        setStep(2);
+        setIsLoading(false);
+        return;
+      }
+
+      const svc = selectedService as any;
+      const rawPrice = svc?.price ?? svc?.cost ?? 25;
+      const rawDuration = svc?.duration ?? svc?.time ?? svc?.duration_text ?? "30 min";
+
+      const dynamicPrice = formatPrice(rawPrice);
+      const dynamicDuration = String(rawDuration);
+
+      const { error } = await supabase.from("appointments").insert([
         {
-          service_name: selectedService.name,
-          date: selectedDate,
-          time: selectedTime,
-          client_name: clientName,
-          client_phone: clientPhone,
-          vehicle_info: vehicleInfo,
-          notes: notes,
-          status: 'pending'
-        }
-      ])
+          client_name: formData.name.trim(),
+          client_email: formData.email.trim(),
+          client_phone: formData.phone.trim(),
+          service_name: selectedService?.name || "Consulta Inicial / Valoración",
+          duration: dynamicDuration,
+          price: dynamicPrice,
+          service_price: dynamicPrice,
+          appointment_date: selectedDate,
+          appointment_time: selectedTime,
+          status: "pending",
+        },
+      ]);
 
-      if (error) throw error
-
-      setBookingSuccess(true)
-    } catch (err) {
-      console.error(err)
-      alert('Ocurrió un error al guardar la reserva. Por favor intenta de nuevo.')
+      if (error) throw error;
+      setIsSubmitted(true);
+    } catch (err: any) {
+      console.error("Error al guardar cita:", err);
+      setErrorMessage(
+        err?.message || "No se pudo guardar la cita. Inténtalo de nuevo."
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsLoading(false);
     }
-  }
-
-  const resetForm = () => {
-    setIsModalOpen(false)
-    setBookingSuccess(false)
-    setSelectedDate('')
-    setSelectedTime('')
-    setClientName('')
-    setClientPhone('')
-    setVehicleInfo('')
-    setNotes('')
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between font-sans">
-      
-      {/* HEADER / NAVBAR */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Shield className="w-8 h-8 text-blue-500" />
-            <span className="font-bold text-xl tracking-wide bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-              ASEGURA
-            </span>
-          </div>
-          <a
-            href="#reserva"
-            className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all"
-          >
-            Agendar Cita
-          </a>
+    <div className="min-h-screen bg-slate-50/60 bg-grid-pattern text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+      {/* Header Minimalista */}
+      <header className="w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Logo />
+          <span className="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center gap-2 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Sistema en Línea
+          </span>
         </div>
       </header>
 
-      {/* MAIN CONTENT */}
-      <main className="max-w-5xl mx-auto px-4 py-10 w-full space-y-12">
-        
-        {/* HERO SECTION */}
-        <section className="text-center space-y-4 max-w-2xl mx-auto">
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
-            Reserva tu inspección en segundos
+      {/* Contenido Principal */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 md:py-12">
+        <div className="text-center max-w-xl mx-auto mb-10">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900">
+            Reserva tu Cita en Segundos
           </h1>
-          <p className="text-slate-400 text-lg">
-            Selecciona el servicio que necesitas, elige el horario que mejor se adapte a ti y confirma tu cita sin complicaciones.
+          <p className="mt-2 text-slate-500 text-sm md:text-base leading-relaxed">
+            Selecciona el servicio de tu preferencia, elige el horario disponible y confirma tu solicitud sin complicaciones.
           </p>
-        </section>
-
-        {/* RESERVATION FORM CONTAINER */}
-        <section id="reserva" className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl space-y-8">
-          
-          {/* PASO 1: SERVICIO */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-blue-400">
-              <span className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 text-xs flex items-center justify-center font-bold">1</span>
-              Selecciona un Servicio
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {SERVICES.map((srv) => {
-                const isSelected = selectedService.id === srv.id
-                return (
-                  <button
-                    key={srv.id}
-                    type="button"
-                    onClick={() => setSelectedService(srv)}
-                    className={`p-4 rounded-xl border text-left transition-all relative flex flex-col justify-between space-y-3 ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-950/30 ring-1 ring-blue-500'
-                        : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
-                    }`}
-                  >
-                    <div>
-                      <h3 className="font-semibold text-white">{srv.name}</h3>
-                      <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {srv.duration}
-                      </p>
-                    </div>
-                    <div className="text-right font-bold text-blue-400 text-lg">
-                      {srv.price}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* PASO 2: FECHA Y HORA */}
-          <div className="space-y-4 pt-4 border-t border-slate-800">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-blue-400">
-              <span className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 text-xs flex items-center justify-center font-bold">2</span>
-              Selecciona Fecha y Hora
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Selector de Fecha */}
-              <div className="space-y-2">
-                <label className="text-sm text-slate-300 font-medium block">Fecha disponible</label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    min={today}
-                    value={selectedDate}
-                    onChange={(e) => {
-                      setSelectedDate(e.target.value)
-                      setSelectedTime('')
-                    }}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Grid de Horarios */}
-              <div className="space-y-2">
-                <label className="text-sm text-slate-300 font-medium block">Horario disponible</label>
-                {!selectedDate ? (
-                  <p className="text-sm text-slate-500 italic py-2">Selecciona primero una fecha para ver horarios.</p>
-                ) : loadingSlots ? (
-                  <p className="text-sm text-slate-400 py-2 animate-pulse">Cargando disponibilidad...</p>
-                ) : (
-                  <div className="grid grid-cols-4 gap-2">
-                    {TIME_SLOTS.map((time) => {
-                      const isOccupied = occupiedSlots.includes(time)
-                      const isSelected = selectedTime === time
-
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          disabled={isOccupied}
-                          onClick={() => setSelectedTime(time)}
-                          className={`py-2 px-1 text-xs font-semibold rounded-lg border transition-all text-center ${
-                            isOccupied
-                              ? 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed line-through'
-                              : isSelected
-                              ? 'bg-blue-600 border-blue-500 text-white shadow-md'
-                              : 'bg-slate-950 border-slate-800 text-slate-200 hover:border-blue-500/50'
-                          }`}
-                        >
-                          {time}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-            </div>
-          </div>
-
-          {/* BOTÓN CONTINUAR */}
-          <div className="pt-4 border-t border-slate-800 flex justify-end">
-            <button
-              type="button"
-              disabled={!selectedDate || !selectedTime}
-              onClick={() => setIsModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-blue-600/20"
-            >
-              Continuar Reserva <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-        </section>
-
-      </main>
-
-      {/* FOOTER DISCRETO CON ENLACE ADMIN */}
-      <footer className="border-t border-slate-800 py-6 text-center text-xs text-slate-500 space-y-2">
-        <p>© 2026 Asegura-App. Todos los derechos reservados.</p>
-        <div>
-          <Link href="/admin" className="text-slate-600 hover:text-slate-400 transition-colors underline">
-            Acceso Administrativo
-          </Link>
         </div>
-      </footer>
 
-      {/* MODAL FORMULARIO DE CLIENTE */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative space-y-6">
-            
-            {!bookingSuccess ? (
-              <>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Completa tus Datos</h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {selectedService.name} - {selectedDate} a las {selectedTime} hs.
-                  </p>
+        {!isSubmitted ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-7 bg-white rounded-3xl p-6 md:p-8 shadow-xl shadow-slate-200/50 border border-slate-200/80 transition-all">
+              
+              {/* Stepper */}
+              <div className="relative flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
+                <div className="absolute top-4 left-6 right-6 h-0.5 bg-slate-100 -z-0"></div>
+                <div
+                  className="absolute top-4 left-6 h-0.5 bg-indigo-600 transition-all duration-300 -z-0"
+                  style={{ width: step === 1 ? "0%" : step === 2 ? "50%" : "100%" }}
+                ></div>
+
+                {[
+                  { num: 1, label: "Servicio" },
+                  { num: 2, label: "Fecha y Hora" },
+                  { num: 3, label: "Tus Datos" },
+                ].map((s) => (
+                  <div key={s.num} className="relative z-10 flex flex-col items-center gap-1.5 bg-white px-2">
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
+                        step === s.num
+                          ? "bg-indigo-600 text-white ring-4 ring-indigo-100 shadow-md shadow-indigo-500/20 scale-105"
+                          : step > s.num
+                          ? "bg-emerald-600 text-white"
+                          : "bg-slate-100 text-slate-400 border border-slate-200"
+                      }`}
+                    >
+                      {step > s.num ? "✓" : s.num}
+                    </div>
+                    <span className={`text-xs font-medium ${step >= s.num ? "text-slate-900 font-semibold" : "text-slate-400"}`}>
+                      {s.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Paso 1: Servicio */}
+              {step === 1 && (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-bold text-slate-900 mb-4">1. Selecciona un Servicio</h2>
+                  
+                  {loadingServices ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-20 bg-slate-100/80 rounded-2xl animate-pulse"></div>
+                      ))}
+                    </div>
+                  ) : services.length === 0 ? (
+                    <p className="text-sm text-slate-500 text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                      No hay servicios disponibles en este momento.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {services.map((srv) => {
+                        const isSelected = selectedService?.id === srv.id;
+                        return (
+                          <button
+                            key={srv.id}
+                            type="button"
+                            onClick={() => setSelectedService(srv)}
+                            className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between group cursor-pointer ${
+                              isSelected
+                                ? "border-indigo-600 bg-indigo-50/40 shadow-sm"
+                                : "border-slate-100 hover:border-slate-300 bg-white hover:bg-slate-50/50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+                                isSelected ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 group-hover:border-slate-400"
+                              }`}>
+                                {isSelected && <span className="text-[10px]">✓</span>}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900 text-sm">{srv.name}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Duración aprox: {srv.duration}</p>
+                              </div>
+                            </div>
+                            <span className="text-base font-extrabold text-slate-900">{formatPrice(srv.price)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <button
+                    disabled={!selectedService}
+                    onClick={() => setStep(2)}
+                    className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 cursor-pointer disabled:cursor-not-allowed active:scale-[0.99]"
+                  >
+                    Continuar a Fecha y Hora &rarr;
+                  </button>
                 </div>
+              )}
 
-                <form onSubmit={handleBookingSubmit} className="space-y-4">
+              {/* Paso 2: Fecha y Hora */}
+              {step === 2 && (
+                <div className="space-y-6">
+                  <h2 className="text-lg font-bold text-slate-900">2. Elige Fecha y Horario</h2>
+                  
                   <div>
-                    <label className="text-xs text-slate-400 mb-1 block font-medium">Nombre Completo</label>
-                    <div className="relative">
-                      <User className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ej. Carlos Mendoza"
-                        value={clientName}
-                        onChange={(e) => setClientName(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Fecha de la Cita</label>
+                    <input
+                      type="date"
+                      min={todayDateStr}
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="w-full p-3.5 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all bg-slate-50/30"
+                    />
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-400 mb-1 block font-medium">Teléfono / WhatsApp</label>
-                    <div className="relative">
-                      <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-                      <input
-                        type="tel"
-                        required
-                        placeholder="Ej. +809 555 1234"
-                        value={clientPhone}
-                        onChange={(e) => setClientPhone(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"
-                      />
+                    <label className="block text-xs font-bold text-slate-700 mb-2">
+                      Horarios Disponibles {loadingSlots && <span className="text-slate-400 font-normal">(Cargando disponibilidad...)</span>}
+                    </label>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {isDayBlocked ? (
+                        <div className="col-span-full p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-medium text-center">
+                          🚫 Esta fecha no está disponible para citas. Por favor selecciona otro día.
+                        </div>
+                      ) : (
+                        TIME_SLOTS.map((slot) => {
+                          const isSelected = selectedTime === slot;
+                          const isReserved = reservedTimes.includes(slot);
+                          const isBlocked = blockedTimes.includes(slot);
+                          const isDisabled = isReserved || isBlocked || loadingSlots;
+
+                          return (
+                            <button
+                              key={slot}
+                              type="button"
+                              disabled={isDisabled}
+                              onClick={() => setSelectedTime(slot)}
+                              className={`p-3 rounded-xl text-xs font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${
+                                isDisabled
+                                  ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+                                  : isSelected
+                                  ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-[1.02] cursor-pointer"
+                                  : "border-slate-100 hover:border-slate-300 text-slate-700 bg-white cursor-pointer"
+                              }`}
+                            >
+                              <span>{slot}</span>
+                              {isDisabled && (
+                                <span className="text-[10px] font-normal text-red-500">
+                                  {isBlocked ? "Bloqueado" : "Ocupado"}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-xs text-slate-400 mb-1 block font-medium">Vehículo / Placa</label>
-                    <div className="relative">
-                      <Car className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ej. Honda Civic 2020 - A123456"
-                        value={vehicleInfo}
-                        onChange={(e) => setVehicleInfo(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs text-slate-400 mb-1 block font-medium">Notas o Comentarios (Opcional)</label>
-                    <div className="relative">
-                      <FileText className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-                      <textarea
-                        rows={2}
-                        placeholder="Algún detalle adicional sobre la revisión..."
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex gap-3">
+                  <div className="flex gap-3 pt-2">
                     <button
                       type="button"
-                      onClick={() => setIsModalOpen(false)}
-                      className="w-1/2 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:bg-slate-800 transition-colors text-sm font-medium"
+                      onClick={() => setStep(1)}
+                      className="w-1/3 border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold py-3.5 rounded-xl text-sm transition-all cursor-pointer"
                     >
-                      Cancelar
+                      &larr; Volver
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!selectedDate || !selectedTime}
+                      onClick={() => setStep(3)}
+                      className="w-2/3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 cursor-pointer disabled:cursor-not-allowed active:scale-[0.99]"
+                    >
+                      Continuar a tus Datos &rarr;
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Paso 3: Contacto y Confirmación */}
+              {step === 3 && (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <h2 className="text-lg font-bold text-slate-900 mb-2">3. Ingresa tus Datos</h2>
+
+                  {errorMessage && (
+                    <div className="p-3.5 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200/80 font-medium">
+                      {errorMessage}
+                    </div>
+                  )}
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Nombre Completo</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej. Juan Pérez"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full p-3.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all placeholder:text-slate-400 bg-slate-50/30"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Correo Electrónico</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="juan@ejemplo.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full p-3.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all placeholder:text-slate-400 bg-slate-50/30"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Teléfono / WhatsApp</label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="+1 (809) 000-0000"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full p-3.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all placeholder:text-slate-400 bg-slate-50/30"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setStep(2)}
+                      className="w-1/3 border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold py-3.5 rounded-xl text-sm transition-all cursor-pointer"
+                    >
+                      &larr; Volver
                     </button>
                     <button
                       type="submit"
-                      disabled={isSubmitting}
-                      className="w-1/2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors text-sm font-medium disabled:opacity-50"
+                      disabled={isLoading}
+                      className="w-2/3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed active:scale-[0.99]"
                     >
-                      {isSubmitting ? 'Guardando...' : 'Confirmar Cita'}
+                      {isLoading ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                          <span>Guardando Cita...</span>
+                        </>
+                      ) : (
+                        "Confirmar Cita"
+                      )}
                     </button>
                   </div>
                 </form>
-              </>
-            ) : (
-              <div className="text-center py-4 space-y-4">
-                <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto animate-bounce" />
-                <h3 className="text-2xl font-bold text-white">¡Reserva Confirmada!</h3>
-                <p className="text-sm text-slate-400">
-                  Gracias <strong className="text-white">{clientName}</strong>, tu cita para <strong className="text-white">{selectedService.name}</strong> ha sido agendada con éxito para el <strong className="text-white">{selectedDate}</strong> a las <strong className="text-white">{selectedTime} hs</strong>.
-                </p>
-                <div className="pt-4 space-y-2">
-                  <button
-                    onClick={resetForm}
-                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl transition-colors text-sm"
-                  >
-                    Hacer otra reserva
-                  </button>
+              )}
+            </div>
+
+            {/* Tarjeta de Resumen Flotante */}
+            <div className="lg:col-span-5 bg-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+              <h3 className="text-base font-bold text-slate-100 mb-6 pb-4 border-b border-slate-800 flex items-center justify-between">
+                <span>Resumen de Reserva</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 bg-indigo-950/90 px-2.5 py-1 rounded-md border border-indigo-800/60">
+                  ASEGURA
+                </span>
+              </h3>
+
+              <div className="space-y-5 text-sm">
+                <div>
+                  <span className="text-xs text-slate-400 block mb-1">Servicio Seleccionado</span>
+                  <p className="font-bold text-slate-100 text-base">{selectedService?.name || "Selecciona un servicio"}</p>
+                  <p className="text-xs text-indigo-400 font-medium mt-0.5">{selectedService?.duration || "-"}</p>
+                </div>
+
+                <div className="pt-4 border-t border-slate-800/80">
+                  <span className="text-xs text-slate-400 block mb-1">Fecha y Horario</span>
+                  <p className={`font-semibold ${selectedDate ? "text-slate-100" : "text-slate-500 italic"}`}>
+                    {selectedDate ? selectedDate : "Por seleccionar..."}
+                  </p>
+                  <p className={`text-xs mt-0.5 ${selectedTime ? "text-slate-300 font-medium" : "text-slate-500 italic"}`}>
+                    {selectedTime ? selectedTime : "Horario pendiente"}
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                  <span className="text-slate-400 font-medium">Costo Total</span>
+                  <span className="text-3xl font-black text-white">{formatPrice(selectedService?.price)}</span>
                 </div>
               </div>
-            )}
 
+              <div className="mt-8 p-4 rounded-2xl bg-slate-800/50 border border-slate-700/60 flex items-start gap-3 backdrop-blur-sm">
+                <svg className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                  Reserva garantizada. Recibirás un recordatorio por correo electrónico y WhatsApp una vez confirmada.
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-
+        ) : (
+          <div className="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-2xl border border-slate-200/80 text-center">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+              <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-black text-slate-900">¡Cita Guardada Exitosamente!</h2>
+            <p className="text-slate-500 text-sm mt-2">
+              Los datos se han registrado correctamente en el sistema.
+            </p>
+            <div className="mt-6 p-4 rounded-2xl bg-slate-50 text-left text-xs space-y-2.5 border border-slate-200/80">
+              <p className="flex justify-between"><span className="text-slate-400">Cliente:</span> <strong className="text-slate-800 font-semibold">{formData.name}</strong></p>
+              <p className="flex justify-between"><span className="text-slate-400">Fecha y Hora:</span> <strong className="text-slate-800 font-semibold">{selectedDate} ({selectedTime})</strong></p>
+              <p className="flex justify-between"><span className="text-slate-400">Contacto:</span> <strong className="text-slate-800 font-semibold">{formData.email}</strong></p>
+            </div>
+            <button
+              onClick={handleReset}
+              className="mt-6 w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md cursor-pointer active:scale-[0.99]"
+            >
+              Realizar Otra Reserva
+            </button>
+          </div>
+        )}
+      </main>
     </div>
-  )
+  );
 }
