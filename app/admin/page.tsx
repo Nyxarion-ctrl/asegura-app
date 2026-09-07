@@ -31,23 +31,45 @@ interface BlockedSlot {
   created_at: string;
 }
 
+interface BusinessSettings {
+  id: string;
+  business_name: string;
+  whatsapp_number: string;
+  primary_color: string;
+  opening_time: string;
+  closing_time: string;
+  slot_duration_minutes: number;
+}
+
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<"APPOINTMENTS" | "BLOCKS">("APPOINTMENTS");
+  const [activeTab, setActiveTab] = useState<"APPOINTMENTS" | "BLOCKS" | "SETTINGS">("APPOINTMENTS");
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"ALL" | "PENDING" | "CONFIRMED" | "CANCELLED">("ALL");
-  const [searchQuery, setSearchQuery] = useState(""); // <-- NUEVO: Estado para el buscador
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Formulario para nuevo bloqueo
   const [newBlockDate, setNewBlockDate] = useState("");
   const [newBlockTime, setNewBlockTime] = useState("ALL");
   const [newBlockReason, setNewBlockReason] = useState("");
+
+  // Configuración del negocio
+  const [settings, setSettings] = useState<BusinessSettings>({
+    id: "11111111-1111-1111-1111-111111111111",
+    business_name: "Asegura Demo",
+    whatsapp_number: "8090000000",
+    primary_color: "#3B82F6",
+    opening_time: "08:00",
+    closing_time: "18:00",
+    slot_duration_minutes: 60,
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     const savedAuth = localStorage.getItem("admin_authenticated");
@@ -77,7 +99,7 @@ export default function AdminPage() {
 
   const fetchData = async () => {
     setLoading(true);
-    await Promise.all([fetchAppointments(), fetchBlockedSlots()]);
+    await Promise.all([fetchAppointments(), fetchBlockedSlots(), fetchSettings()]);
     setLoading(false);
   };
 
@@ -100,6 +122,42 @@ export default function AdminPage() {
 
     if (!error && data) {
       setBlockedSlots(data as BlockedSlot[]);
+    }
+  };
+
+  const fetchSettings = async () => {
+    const { data, error } = await supabase
+      .from("business_settings")
+      .select("*")
+      .eq("id", "11111111-1111-1111-1111-111111111111")
+      .single();
+
+    if (!error && data) {
+      setSettings(data as BusinessSettings);
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+
+    const { error } = await supabase.from("business_settings").upsert({
+      id: settings.id,
+      business_name: settings.business_name,
+      whatsapp_number: settings.whatsapp_number,
+      primary_color: settings.primary_color,
+      opening_time: settings.opening_time,
+      closing_time: settings.closing_time,
+      slot_duration_minutes: Number(settings.slot_duration_minutes),
+      updated_at: new Date().toISOString(),
+    });
+
+    setSavingSettings(false);
+
+    if (error) {
+      alert("Error al guardar la configuración: " + error.message);
+    } else {
+      alert("Configuración actualizada con éxito.");
     }
   };
 
@@ -152,7 +210,7 @@ export default function AdminPage() {
       return;
     }
 
-    const message = `¡Hola, *${item.client_name}*! 👋\n\nTe escribimos de *Asegura* para confirmar tu reserva:\n\n📌 *Servicio:* ${item.service_name}\n📅 *Fecha:* ${item.appointment_date}\n⏰ *Hora:* ${item.appointment_time}\n💰 *Precio:* ${item.service_price}\n\n¡Te esperamos!`;
+    const message = `¡Hola, *${item.client_name}*! 👋\n\nTe escribimos de *${settings.business_name || "Asegura"}* para confirmar tu reserva:\n\n📌 *Servicio:* ${item.service_name}\n📅 *Fecha:* ${item.appointment_date}\n⏰ *Hora:* ${item.appointment_time}\n💰 *Precio:* ${item.service_price}\n\n¡Te esperamos!`;
 
     const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
@@ -165,13 +223,16 @@ export default function AdminPage() {
       return;
     }
 
-    const { data, error } = await supabase.from("blocked_slots").insert([
-      {
-        blocked_date: newBlockDate,
-        blocked_time: newBlockTime,
-        reason: newBlockReason || "No disponible",
-      },
-    ]).select();
+    const { data, error } = await supabase
+      .from("blocked_slots")
+      .insert([
+        {
+          blocked_date: newBlockDate,
+          blocked_time: newBlockTime,
+          reason: newBlockReason || "No disponible",
+        },
+      ])
+      .select();
 
     if (error) {
       alert("Error al guardar bloqueo: " + error.message);
@@ -193,17 +254,14 @@ export default function AdminPage() {
     }
   };
 
-  // NUEVO: Filtrado combinado por Categoría y Búsqueda por texto
   const filteredAppointments = appointments.filter((item) => {
     const status = (item.status || "pending").toLowerCase();
-    
-    // Filtro por Estado
+
     let matchesStatus = true;
     if (filter === "PENDING") matchesStatus = status === "pending";
     if (filter === "CONFIRMED") matchesStatus = status === "confirmed";
     if (filter === "CANCELLED") matchesStatus = status === "cancelled";
 
-    // Filtro por Búsqueda
     const query = searchQuery.toLowerCase().trim();
     const matchesSearch =
       query === "" ||
@@ -276,7 +334,12 @@ export default function AdminPage() {
               className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
               Actualizar
             </button>
@@ -293,10 +356,10 @@ export default function AdminPage() {
       {/* Panel Contenido */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
         {/* Selector de Pestañas Principales */}
-        <div className="flex items-center gap-3 mb-8">
+        <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-1">
           <button
             onClick={() => setActiveTab("APPOINTMENTS")}
-            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "APPOINTMENTS"
                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
@@ -306,13 +369,23 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab("BLOCKS")}
-            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "BLOCKS"
                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
             }`}
           >
             🚫 Bloqueos de Disponibilidad
+          </button>
+          <button
+            onClick={() => setActiveTab("SETTINGS")}
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "SETTINGS"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            ⚙️ Configuración del Negocio
           </button>
         </div>
 
@@ -331,7 +404,12 @@ export default function AdminPage() {
                   className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer"
                 >
                   <svg className="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                   Limpiar Canceladas
                 </button>
@@ -358,7 +436,12 @@ export default function AdminPage() {
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
 
@@ -480,7 +563,12 @@ export default function AdminPage() {
                                   className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl transition-all border border-slate-200 hover:border-rose-200 cursor-pointer"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
                                   </svg>
                                 </button>
                               </div>
@@ -494,7 +582,7 @@ export default function AdminPage() {
               )}
             </div>
           </>
-        ) : (
+        ) : activeTab === "BLOCKS" ? (
           /* Sección de Gestión de Bloqueos */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Formulario para nuevo bloqueo */}
@@ -567,7 +655,11 @@ export default function AdminPage() {
                       <div>
                         <p className="font-bold text-slate-900">{slot.blocked_date}</p>
                         <p className="text-slate-500 text-[11px]">
-                          Hora: <span className="font-semibold text-rose-600">{slot.blocked_time === "ALL" ? "Día Completo" : slot.blocked_time}</span> | Motivo: {slot.reason}
+                          Hora:{" "}
+                          <span className="font-semibold text-rose-600">
+                            {slot.blocked_time === "ALL" ? "Día Completo" : slot.blocked_time}
+                          </span>{" "}
+                          | Motivo: {slot.reason}
                         </p>
                       </div>
                       <button
@@ -581,6 +673,105 @@ export default function AdminPage() {
                 </div>
               )}
             </div>
+          </div>
+        ) : (
+          /* Sección de Configuración del Negocio */
+          <div className="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900 mb-1">Configuración del Negocio</h2>
+            <p className="text-xs text-slate-500 mb-6">
+              Personaliza el nombre, canal de WhatsApp, colores y horario laboral general.
+            </p>
+
+            <form onSubmit={handleSaveSettings} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Nombre del Negocio</label>
+                <input
+                  type="text"
+                  value={settings.business_name || ""}
+                  onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Número de WhatsApp (Notificaciones)</label>
+                <input
+                  type="text"
+                  value={settings.whatsapp_number || ""}
+                  onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Apertura</label>
+                  <input
+                    type="time"
+                    value={settings.opening_time || "08:00"}
+                    onChange={(e) => setSettings({ ...settings, opening_time: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Cierre</label>
+                  <input
+                    type="time"
+                    value={settings.closing_time || "18:00"}
+                    onChange={(e) => setSettings({ ...settings, closing_time: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Duración del Turno (Minutos)</label>
+                  <input
+                    type="number"
+                    min="15"
+                    max="240"
+                    step="15"
+                    value={settings.slot_duration_minutes || 60}
+                    onChange={(e) => setSettings({ ...settings, slot_duration_minutes: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Color Principal (Hex)</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={settings.primary_color || "#3B82F6"}
+                      onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
+                      className="w-10 h-9 rounded-xl border border-slate-200 p-1 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={settings.primary_color || "#3B82F6"}
+                      onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingSettings}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
+              >
+                {savingSettings ? "Guardando..." : "Guardar Cambios"}
+              </button>
+            </form>
           </div>
         )}
       </main>
