@@ -319,7 +319,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 bg-grid-pattern text-slate-900 flex flex-col font-sans">
-      {/* Header Admin */}
+     {/* Header Admin */}
       <header className="w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -333,16 +333,7 @@ export default function AdminPage() {
               onClick={fetchData}
               className="text-xs font-semibold px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 transition-all flex items-center gap-2 shadow-xs cursor-pointer"
             >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
               Actualizar
-            </button>
-            <button
-              onClick={handleLogout}
-              className="text-xs font-semibold px-3.5 py-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/80 transition-all cursor-pointer"
-            >
-              Salir
             </button>
           </div>
         </div>
@@ -375,9 +366,9 @@ export default function AdminPage() {
             }`}
           >
             <svg className={`w-4 h-4 ${activeTab === "BLOCKS" ? "text-white" : "text-rose-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            Bloqueos de Disponibilidad
+            Bloqueos de Agenda
           </button>
 
           <button
@@ -388,200 +379,76 @@ export default function AdminPage() {
                 : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-2xs"
             }`}
           >
-            <svg className={`w-4 h-4 ${activeTab === "SETTINGS" ? "text-white" : "text-slate-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`w-4 h-4 ${activeTab === "SETTINGS" ? "text-white" : "text-slate-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            Configuración del Negocio
+            Configuración
           </button>
         </div>
 
+        {/* Tab 1: Citas y Reservas */}
         {activeTab === "APPOINTMENTS" ? (
-          <>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-              <div>
-                <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Gestión de Citas</h1>
-                <p className="text-xs text-slate-500 mt-1">
-                  Revisa y gestiona las reservas recibidas desde tu plataforma.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={clearCancelledAppointments}
-                  className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-2xs cursor-pointer"
-                >
-                  <svg className="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Limpiar Canceladas
-                </button>
-                <div className="px-4 py-2 bg-white rounded-xl border border-slate-200/80 shadow-2xs text-xs font-medium">
-                  Total Citas: <span className="font-bold text-indigo-600">{filteredAppointments.length}</span>
-                </div>
-              </div>
-            </div>
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden p-6">
+            <h2 className="text-lg font-extrabold text-slate-900 mb-1">Citas Programadas</h2>
+            <p className="text-xs text-slate-500 mb-6">Gestiona y confirma los turnos reservados por tus clientes.</p>
 
-            {/* Controles: Buscador + Pestañas de Filtro */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6 items-stretch sm:items-center justify-between">
-              <div className="relative flex-1 max-w-md">
-                <input
-                  type="text"
-                  placeholder="Buscar por cliente, teléfono, email o servicio..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 bg-white rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 shadow-2xs"
-                />
-                <svg
-                  className="w-4 h-4 text-slate-400 absolute left-3 top-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+            {appointments.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-xl">
+                <p className="text-xs text-slate-400 font-medium">No hay citas registradas en el sistema.</p>
               </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {appointments.map((apt) => (
+                  <div key={apt.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 px-2 rounded-lg transition-colors">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-bold text-slate-900 text-sm">{apt.client_name}</p>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                          apt.status === "CONFIRMED" ? "bg-emerald-100 text-emerald-700" :
+                          apt.status === "CANCELLED" ? "bg-rose-100 text-rose-700" :
+                          "bg-amber-100 text-amber-700"
+                        }`}>
+                          {apt.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Fecha: <span className="font-semibold text-slate-700">{apt.appointment_date}</span> | Hora: <span className="font-semibold text-slate-700">{apt.appointment_time}</span>
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Teléfono: <span className="font-medium text-slate-700">{apt.client_phone}</span>
+                      </p>
+                    </div>
 
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                {[
-                  { id: "ALL", label: "Todas" },
-                  { id: "PENDING", label: "Pendientes" },
-                  { id: "CONFIRMED", label: "Confirmadas" },
-                  { id: "CANCELLED", label: "Canceladas" },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setFilter(tab.id as any)}
-                    className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border ${
-                      filter === tab.id
-                        ? "bg-indigo-600 text-white border-indigo-600 shadow-2xs"
-                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleUpdateStatus(apt.id, "CONFIRMED")}
+                        className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Confirmar
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(apt.id, "CANCELLED")}
+                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
-
-            {/* Tabla de Citas */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-              {loading ? (
-                <div className="p-12 text-center text-sm text-slate-400">Cargando citas...</div>
-              ) : filteredAppointments.length === 0 ? (
-                <div className="p-12 text-center text-sm text-slate-500">
-                  No hay citas registradas con estos criterios.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        <th className="p-4">Cliente</th>
-                        <th className="p-4">Servicio</th>
-                        <th className="p-4">Fecha y Hora</th>
-                        <th className="p-4">Precio</th>
-                        <th className="p-4">Estado</th>
-                        <th className="p-4 text-right">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
-                      {filteredAppointments.map((item) => {
-                        const currentStatus = (item.status || "pending").toLowerCase();
-
-                        return (
-                          <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
-                            <td className="p-4">
-                              <p className="font-bold text-slate-900">{item.client_name}</p>
-                              <p className="text-slate-400 text-[11px]">{item.client_email}</p>
-                              <p className="text-slate-400 text-[11px]">{item.client_phone}</p>
-                            </td>
-                            <td className="p-4 font-medium text-slate-800">{item.service_name}</td>
-                            <td className="p-4">
-                              <p className="font-semibold text-slate-900">{item.appointment_date}</p>
-                              <p className="text-slate-400 text-[11px]">{item.appointment_time}</p>
-                            </td>
-                            <td className="p-4 font-extrabold text-slate-900">{item.service_price}</td>
-                            <td className="p-4">
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1.5 ${
-                                  currentStatus === "confirmed"
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                    : currentStatus === "cancelled"
-                                    ? "bg-rose-50 text-rose-700 border border-rose-200"
-                                    : "bg-amber-50 text-amber-700 border border-amber-200"
-                                }`}
-                              >
-                                <span
-                                  className={`w-1.5 h-1.5 rounded-full ${
-                                    currentStatus === "confirmed"
-                                      ? "bg-emerald-500"
-                                      : currentStatus === "cancelled"
-                                      ? "bg-rose-500"
-                                      : "bg-amber-500"
-                                  }`}
-                                />
-                                {item.status || "PENDING"}
-                              </span>
-                            </td>
-                            <td className="p-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  onClick={() => sendWhatsAppNotification(item)}
-                                  title="Enviar recordatorio por WhatsApp"
-                                  className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
-                                >
-                                  <svg className="w-3.5 h-3.5 fill-emerald-600" viewBox="0 0 24 24">
-                                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
-                                  </svg>
-                                  WhatsApp
-                                </button>
-
-                                {currentStatus !== "confirmed" && (
-                                  <button
-                                    onClick={() => updateStatus(item.id, "CONFIRMED")}
-                                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-bold shadow-2xs transition-all cursor-pointer"
-                                  >
-                                    Confirmar
-                                  </button>
-                                )}
-                                {currentStatus !== "cancelled" && (
-                                  <button
-                                    onClick={() => updateStatus(item.id, "CANCELLED")}
-                                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[11px] font-semibold transition-all cursor-pointer"
-                                  >
-                                    Cancelar
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => deleteAppointment(item.id)}
-                                  title="Eliminar registro"
-                                  className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl transition-all border border-slate-200 hover:border-rose-200 cursor-pointer"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </>
+            )}
+          </div>
         ) : activeTab === "BLOCKS" ? (
-          /* Sección de Gestión de Bloqueos */
+          /* Tab 2: Bloqueos de Horario */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs h-fit">
-              <h2 className="text-lg font-extrabold text-slate-900 mb-1">Bloquear Disponibilidad</h2>
-              <p className="text-xs text-slate-500 mb-6">Inhabilita un día completo o una hora específica.</p>
+              <h2 className="text-lg font-extrabold text-slate-900 mb-1">Bloquear Horario</h2>
+              <p className="text-xs text-slate-500 mb-6">Inhabilita un horario o día completo.</p>
 
               <form onSubmit={handleAddBlock} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Fecha</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Fecha a bloquear</label>
                   <input
                     type="date"
                     value={newBlockDate}
@@ -598,15 +465,18 @@ export default function AdminPage() {
                     onChange={(e) => setNewBlockTime(e.target.value)}
                     className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
                   >
-                    <option value="ALL">Día Completo (Festivo/No laboral)</option>
-                    <option value="09:00 AM">09:00 AM</option>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="11:00 AM">11:00 AM</option>
-                    <option value="12:00 PM">12:00 PM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="03:00 PM">03:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="05:00 PM">05:00 PM</option>
+                    <option value="ALL">Todo el día</option>
+                    <option value="08:00">08:00 AM</option>
+                    <option value="09:00">09:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="11:00">11:00 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:00">01:00 PM</option>
+                    <option value="14:00">02:00 PM</option>
+                    <option value="15:00">03:00 PM</option>
+                    <option value="16:00">04:00 PM</option>
+                    <option value="17:00">05:00 PM</option>
+                    <option value="18:00">06:00 PM</option>
                   </select>
                 </div>
 
