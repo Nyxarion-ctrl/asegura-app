@@ -447,212 +447,209 @@ export default function AdminPage() {
               <p className="text-xs text-slate-500 mb-6">Inhabilita un horario o día completo.</p>
 
               <form onSubmit={handleAddBlock} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Fecha a bloquear</label>
-              <input
-                type="date"
-                value={newBlockDate}
-                onChange={(e) => setNewBlockDate(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50 text-slate-700 font-medium cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-40 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Horario a bloquear</label>
-              <div className="relative">
-                <select
-                  value={newBlockTime}
-                  onChange={(e) => setNewBlockTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50 appearance-none text-slate-700 font-medium cursor-pointer pr-8"
-                >
-                  <option value="ALL">Todo el día</option>
-                  <option value="08:00">08:00 AM</option>
-                  <option value="09:00">09:00 AM</option>
-                  <option value="10:00">10:00 AM</option>
-                  <option value="11:00">11:00 AM</option>
-                  <option value="12:00">12:00 PM</option>
-                  <option value="13:00">01:00 PM</option>
-                  <option value="14:00">02:00 PM</option>
-                  <option value="15:00">03:00 PM</option>
-                  <option value="16:00">04:00 PM</option>
-                  <option value="17:00">05:00 PM</option>
-                  <option value="18:00">06:00 PM</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Fecha a bloquear</label>
+                  <input
+                    type="date"
+                    value={newBlockDate}
+                    onChange={(e) => setNewBlockDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    required
+                  />
                 </div>
-              </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Horario a bloquear</label>
+                  <select
+                    value={newBlockTime}
+                    onChange={(e) => setNewBlockTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                  >
+                    <option value="ALL">Todo el día</option>
+                    <option value="08:00">08:00 AM</option>
+                    <option value="09:00">09:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="11:00">11:00 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:00">01:00 PM</option>
+                    <option value="14:00">02:00 PM</option>
+                    <option value="15:00">03:00 PM</option>
+                    <option value="16:00">04:00 PM</option>
+                    <option value="17:00">05:00 PM</option>
+                    <option value="18:00">06:00 PM</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Motivo (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Día festivo, vacaciones, mantenimiento"
+                    value={newBlockReason}
+                    onChange={(e) => setNewBlockReason(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-100 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Guardar Bloqueo
+                </button>
+              </form>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Motivo (Opcional)</label>
-              <input
-                type="text"
-                placeholder="Ej. Día festivo, vacaciones, mantenimiento"
-                value={newBlockReason}
-                onChange={(e) => setNewBlockReason(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
-              />
-            </div>
+            <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden p-6">
+              <h2 className="text-lg font-extrabold text-slate-900 mb-1">Bloqueos Registrados</h2>
+              <p className="text-xs text-slate-500 mb-6">Estas fechas y horas no estarán disponibles para los clientes.</p>
 
-          <button
-              type="submit"
-              className="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              Guardar Bloqueo
-            </button>
-          </form>
-        </div>
-
-        <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden p-6">
-          <h2 className="text-lg font-extrabold text-slate-900 mb-1">Bloqueos Registrados</h2>
-          <p className="text-xs text-slate-500 mb-6">Estas fechas y horas no estarán disponibles para los clientes.</p>
-
-          {blockedSlots.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-xl">
-              <p className="text-xs text-slate-400 font-medium">No hay bloqueos activos actualmente.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {blockedSlots.map((slot) => (
-                <div key={slot.id} className="py-3.5 flex items-center justify-between text-xs hover:bg-slate-50/50 px-2 rounded-lg transition-colors">
-                  <div>
-                    <span className="font-bold text-slate-800">{slot.block_date}</span>
-                    <span className="ml-2 text-slate-500">
-                      ({slot.block_time === "ALL" ? "Todo el día" : slot.block_time})
-                    </span>
-                    {slot.reason && <p className="text-[11px] text-slate-400 mt-0.5">{slot.reason}</p>}
-                  </div>
-                 <button
-                onClick={() => handleDeleteBlock(slot.id)}
-                className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  </div>
-)}
-
-{/* Sección de Configuración del Negocio */}
-{activeTab === "settings" && (
-      <div className="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
-        <h2 className="text-lg font-extrabold text-slate-900 mb-1">Configuración del Negocio</h2>
-        <p className="text-xs text-slate-500 mb-6">
-          Personaliza el nombre, canal de WhatsApp, colores y horario laboral general.
-        </p>
-
-        <form onSubmit={handleSaveSettings} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Nombre del Negocio</label>
-            <input
-              type="text"
-              value={settings.business_name || ""}
-              onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Número de WhatsApp (Notificaciones)</label>
-            <input
-              type="text"
-              value={settings.whatsapp_number || ""}
-              onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Apertura</label>
-              <select
-                value={settings.opening_time || "08:00"}
-                onChange={(e) => setSettings({ ...settings, opening_time: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
-                required
-              >
-                <option value="06:00">06:00 AM</option>
-                <option value="07:00">07:00 AM</option>
-                <option value="08:00">08:00 AM</option>
-                <option value="09:00">09:00 AM</option>
-                <option value="10:00">10:00 AM</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Cierre</label>
-              <select
-                value={settings.closing_time || "18:00"}
-                onChange={(e) => setSettings({ ...settings, closing_time: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
-                required
-              >
-                <option value="16:00">04:00 PM</option>
-                <option value="17:00">05:00 PM</option>
-                <option value="18:00">06:00 PM</option>
-                <option value="19:00">07:00 PM</option>
-                <option value="20:00">08:00 PM</option>
-                <option value="21:00">09:00 PM</option>
-                <option value="22:00">10:00 PM</option>
-              </select>
+              {blockedSlots.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-xl">
+                  <p className="text-xs text-slate-400 font-medium">No hay bloqueos activos actualmente.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {blockedSlots.map((slot) => (
+                    <div key={slot.id} className="py-3.5 flex items-center justify-between text-xs hover:bg-slate-50/50 px-2 rounded-lg transition-colors">
+                      <div>
+                        <p className="font-bold text-slate-900">{slot.blocked_date}</p>
+                        <p className="text-slate-500 text-[11px] mt-0.5">
+                          Hora:{" "}
+                          <span className="font-semibold text-rose-600">
+                            {slot.blocked_time === "ALL" ? "Día Completo" : slot.blocked_time}
+                          </span>{" "}
+                          | Motivo: {slot.reason}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteBlock(slot.id)}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 rounded-lg text-[11px] font-semibold transition-all cursor-pointer"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
+        ) : (
+          /* Sección de Configuración del Negocio */
+          <div className="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <h2 className="text-lg font-extrabold text-slate-900 mb-1">Configuración del Negocio</h2>
+            <p className="text-xs text-slate-500 mb-6">
+              Personaliza el nombre, canal de WhatsApp, colores y horario laboral general.
+            </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Duración del Turno (Minutos)</label>
-              <input
-                type="number"
-                value={settings.slot_duration || 60}
-                onChange={(e) => setSettings({ ...settings, slot_duration: parseInt(e.target.value) })}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Color Principal (Hex)</label>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={settings.primary_color || "#3B82F6"}
-                  onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-                  className="h-10 w-12 rounded-lg border border-slate-200 cursor-pointer p-1 bg-slate-50"
-                />
+            <form onSubmit={handleSaveSettings} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Nombre del Negocio</label>
                 <input
                   type="text"
-                  value={settings.primary_color || "#3B82F6"}
-                  onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
+                  value={settings.business_name || ""}
+                  onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
                   required
                 />
               </div>
-            </div>
-          </div>
 
-          <button
-            type="submit"
-            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm cursor-pointer"
-          >
-            Guardar Cambios
-          </button>
-        </form>
-      </div>
-    )}
-  </main>
-</div>
-);
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Número de WhatsApp (Notificaciones)</label>
+                <input
+                  type="text"
+                  value={settings.whatsapp_number || ""}
+                  onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Apertura</label>
+                  <select
+                    value={settings.opening_time || "08:00"}
+                    onChange={(e) => setSettings({ ...settings, opening_time: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    required
+                  >
+                    <option value="06:00">06:00 AM</option>
+                    <option value="07:00">07:00 AM</option>
+                    <option value="08:00">08:00 AM</option>
+                    <option value="09:00">09:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Cierre</label>
+                  <select
+                    value={settings.closing_time || "18:00"}
+                    onChange={(e) => setSettings({ ...settings, closing_time: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    required
+                  >
+                    <option value="16:00">04:00 PM</option>
+                    <option value="17:00">05:00 PM</option>
+                    <option value="18:00">06:00 PM</option>
+                    <option value="19:00">07:00 PM</option>
+                    <option value="20:00">08:00 PM</option>
+                    <option value="21:00">09:00 PM</option>
+                    <option value="22:00">10:00 PM</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Duración del Turno (Minutos)</label>
+                  <input
+                    type="number"
+                    min="15"
+                    max="240"
+                    step="15"
+                    value={settings.slot_duration_minutes || 60}
+                    onChange={(e) => setSettings({ ...settings, slot_duration_minutes: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Color Principal (Hex)</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={settings.primary_color || "#3B82F6"}
+                      onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
+                      className="w-10 h-9 rounded-xl border border-slate-200 p-1 cursor-pointer bg-white"
+                    />
+                    <input
+                      type="text"
+                      value={settings.primary_color || "#3B82F6"}
+                      onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
+                      className="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50 uppercase"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingSettings}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+              >
+                {savingSettings ? "Guardando..." : "Guardar Cambios"}
+              </button>
+            </form>
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }
