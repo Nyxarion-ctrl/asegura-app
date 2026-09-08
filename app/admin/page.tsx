@@ -22,6 +22,32 @@ export interface BlockedSlot {
   id: string;
   business_id: string;
   blocked_date: string;
+  blocked_time: string;
+  reason?: string;
+}
+
+export interface BusinessSettings {
+  id?: string;
+  business_name: string;
+  whatsapp_number: string;
+  opening_time: string;
+  closing_time: string;
+  slot_duration_minutes: number;
+  primary_color: string;
+}
+export interface Service {
+  id: string;
+  business_id: string;
+  name: string;
+  description?: string;
+  duration_minutes: number;
+  price_cents: number;
+}
+
+export interface BlockedSlot {
+  id: string;
+  business_id: string;
+  blocked_date: string;
   blocked_time: string; // 'ALL' o formato 'HH:MM'
   reason?: string;
 }
