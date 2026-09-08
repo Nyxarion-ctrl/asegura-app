@@ -571,24 +571,36 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Apertura</label>
-                  <input
-                    type="time"
+                  <select
                     value={settings.opening_time || "08:00"}
                     onChange={(e) => setSettings({ ...settings, opening_time: e.target.value })}
                     className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
                     required
-                  />
+                  >
+                    <option value="06:00">06:00 AM</option>
+                    <option value="07:00">07:00 AM</option>
+                    <option value="08:00">08:00 AM</option>
+                    <option value="09:00">09:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Cierre</label>
-                  <input
-                    type="time"
+                  <select
                     value={settings.closing_time || "18:00"}
                     onChange={(e) => setSettings({ ...settings, closing_time: e.target.value })}
                     className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
                     required
-                  />
+                  >
+                    <option value="16:00">04:00 PM</option>
+                    <option value="17:00">05:00 PM</option>
+                    <option value="18:00">06:00 PM</option>
+                    <option value="19:00">07:00 PM</option>
+                    <option value="20:00">08:00 PM</option>
+                    <option value="21:00">09:00 PM</option>
+                    <option value="22:00">10:00 PM</option>
+                  </select>
                 </div>
               </div>
 
