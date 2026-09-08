@@ -447,65 +447,68 @@ export default function AdminPage() {
               <p className="text-xs text-slate-500 mb-6">Inhabilita un horario o día completo.</p>
 
               <form onSubmit={handleAddBlock} className="space-y-4">
-               <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Fecha a bloquear</label>
-            <input
-              type="date"
-              value={newBlockDate}
-              onChange={(e) => setNewBlockDate(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50 text-slate-700 font-medium cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-40 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
-              required
-            />
-          </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Fecha a bloquear</label>
+              <input
+                type="date"
+                value={newBlockDate}
+                onChange={(e) => setNewBlockDate(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50 text-slate-700 font-medium cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-40 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
+                required
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Horario a bloquear</label>
-            <div className="relative">
-              <select
-                value={newBlockTime}
-                onChange={(e) => setNewBlockTime(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50 appearance-none text-slate-700 font-medium cursor-pointer pr-8"
-              >
-                <option value="ALL">Todo el día</option>
-                <option value="08:00">08:00 AM</option>
-                <option value="09:00">09:00 AM</option>
-                <option value="10:00">10:00 AM</option>
-                <option value="11:00">11:00 AM</option>
-                <option value="12:00">12:00 PM</option>
-                <option value="13:00">01:00 PM</option>
-                <option value="14:00">02:00 PM</option>
-                <option value="15:00">03:00 PM</option>
-                <option value="16:00">04:00 PM</option>
-                <option value="17:00">05:00 PM</option>
-                <option value="18:00">06:00 PM</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Motivo (Opcional)</label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Día festivo, vacaciones, mantenimiento"
-                    value={newBlockReason}
-                    onChange={(e) => setNewBlockReason(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-100 transition-all cursor-pointer flex items-center justify-center gap-2"
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Horario a bloquear</label>
+              <div className="relative">
+                <select
+                  value={newBlockTime}
+                  onChange={(e) => setNewBlockTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50 appearance-none text-slate-700 font-medium cursor-pointer pr-8"
                 >
+                  <option value="ALL">Todo el día</option>
+                  <option value="08:00">08:00 AM</option>
+                  <option value="09:00">09:00 AM</option>
+                  <option value="10:00">10:00 AM</option>
+                  <option value="11:00">11:00 AM</option>
+                  <option value="12:00">12:00 PM</option>
+                  <option value="13:00">01:00 PM</option>
+                  <option value="14:00">02:00 PM</option>
+                  <option value="15:00">03:00 PM</option>
+                  <option value="16:00">04:00 PM</option>
+                  <option value="17:00">05:00 PM</option>
+                  <option value="18:00">06:00 PM</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                   </svg>
-                  Guardar Bloqueo
-                </button>
-              </form>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Motivo (Opcional)</label>
+              <input
+                type="text"
+                placeholder="Ej. Día festivo, vacaciones, mantenimiento"
+                value={newBlockReason}
+                onChange={(e) => setNewBlockReason(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSavingBlock}
+              className="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              {isSavingBlock ? "Guardando..." : "Guardar Bloqueo"}
+            </button>
+          </form>
             </div>
 
             <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden p-6">
