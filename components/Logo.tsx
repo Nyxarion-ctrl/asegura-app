@@ -1,8 +1,13 @@
-export default function Logo({ className = "h-9" }: { className?: string }) {
+interface LogoProps {
+  className?: string;
+  isAdmin?: boolean;
+}
+
+export default function Logo({ className = "h-9", isAdmin = false }: LogoProps) {
   return (
     <div className={`inline-flex items-center gap-3 ${className}`}>
       {/* Icono Isotipo SVG */}
-      <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-blue-600 to-slate-900 p-[1px] shadow-lg shadow-indigo-500/20">
+      <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-blue-600 to-slate-900 p-[1px] shadow-lg shadow-indigo-500/20 shrink-0">
         <div className="w-full h-full bg-slate-950/40 backdrop-blur-md rounded-[11px] flex items-center justify-center">
           <svg
             viewBox="0 0 24 24"
@@ -24,11 +29,26 @@ export default function Logo({ className = "h-9" }: { className?: string }) {
 
       {/* Tipografía de la marca */}
       <div className="flex flex-col">
-        <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white font-sans leading-none">
-          Asegura<span className="text-indigo-600 dark:text-indigo-400">.</span>
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white font-sans leading-none">
+            Asegura<span className="text-indigo-600 dark:text-indigo-400">.</span>
+          </span>
+
+          {/* Badges para el Admin */}
+          {isAdmin && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-1.5 py-0.5 rounded-md leading-none">
+                v1.0
+              </span>
+              <span className="text-[9px] font-extrabold text-white bg-indigo-600 px-2 py-0.5 rounded-full uppercase tracking-wider leading-none shadow-xs">
+                ADMIN
+              </span>
+            </div>
+          )}
+        </div>
+
         <span className="text-[10px] font-medium tracking-widest text-slate-400 uppercase leading-tight mt-1">
-          Smart Booking
+          {isAdmin ? "Smart Booking System" : "Smart Booking"}
         </span>
       </div>
     </div>
