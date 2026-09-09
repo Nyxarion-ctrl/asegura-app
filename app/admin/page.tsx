@@ -3,12 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-// Inicialización de Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// --- INTERFACES ---
 export interface Service {
   id: string;
   business_id: string;
@@ -40,7 +38,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"services" | "bookings" | "blocks" | "settings">("services");
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Estados de datos
+  // Datos
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
@@ -53,7 +51,7 @@ export default function AdminPage() {
     primary_color: "#3B82F6",
   });
 
-  // Estados de formularios
+  // Formularios
   const [newService, setNewService] = useState({
     name: "",
     description: "",
@@ -112,13 +110,12 @@ export default function AdminPage() {
         if (blockData) setBlockedSlots(blockData);
       }
     } catch (error) {
-      console.error("Error al cargar información:", error);
+      console.error("Error al obtener datos:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // --- MÉTODOS DE SERVICIOS ---
   const handleCreateService = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!businessId || !newService.name) return;
@@ -142,13 +139,13 @@ export default function AdminPage() {
         .single();
 
       if (error) {
-        alert("Error al registrar servicio: " + error.message);
+        alert("Error al guardar servicio: " + error.message);
         return;
       }
 
       setServices([...services, data]);
       setNewService({ name: "", description: "", duration_minutes: 30, price: "" });
-    } catch (err: any) {
+    } catch (err) {
       alert("Error procesando servicio.");
     } finally {
       setCreatingService(false);
@@ -156,16 +153,11 @@ export default function AdminPage() {
   };
 
   const handleDeleteService = async (id: string) => {
-    if (!confirm("¿Seguro que deseas eliminar este servicio?")) return;
+    if (!confirm("¿Deseas eliminar este servicio?")) return;
     const { error } = await supabase.from("services").delete().eq("id", id);
-    if (error) {
-      alert("Error al eliminar: " + error.message);
-    } else {
-      setServices(services.filter((s) => s.id !== id));
-    }
+    if (!error) setServices(services.filter((s) => s.id !== id));
   };
 
-  // --- MÉTODOS DE BLOQUEOS ---
   const handleCreateBlock = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!businessId || !newBlock.blocked_date) return;
@@ -192,8 +184,8 @@ export default function AdminPage() {
 
       setBlockedSlots([...blockedSlots, data]);
       setNewBlock({ blocked_date: "", blocked_time: "Todo el día", reason: "" });
-    } catch (err: any) {
-      alert("Error inesperado en bloqueo.");
+    } catch (err) {
+      alert("Error procesando bloqueo.");
     } finally {
       setCreatingBlock(false);
     }
@@ -204,7 +196,6 @@ export default function AdminPage() {
     if (!error) setBlockedSlots(blockedSlots.filter((b) => b.id !== id));
   };
 
-  // --- MÉTODOS DE CONFIGURACIÓN ---
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingSettings(true);
@@ -240,10 +231,10 @@ export default function AdminPage() {
 
       if (result?.data) {
         setBusinessId(result.data.id);
-        alert("Configuración actualizada correctamente.");
+        alert("Configuración guardada.");
       }
     } catch (error: any) {
-      alert("Error al actualizar: " + error.message);
+      alert("Error al guardar: " + error.message);
     } finally {
       setSavingSettings(false);
     }
@@ -251,27 +242,27 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-xs font-semibold text-slate-500">
-        Cargando Panel de Administración...
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-xs font-semibold text-slate-400">
+        Cargando Panel...
       </div>
     );
   }
 
   return (
     <div
-      className="min-h-screen bg-[#f8fafc] text-slate-800 relative font-sans antialiased selection:bg-indigo-500 selection:text-white"
+      className="min-h-screen bg-[#f8fafc] text-slate-800 relative font-sans antialiased"
       style={{
         backgroundImage: `radial-gradient(#e2e8f0 1.2px, transparent 1.2px)`,
         backgroundSize: `24px 24px`,
       }}
     >
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-8 py-8">
 
-        {/* HEADER EXACTO A LOS VIDEOS */}
+        {/* HEADER EXACTO DE IMAGEN 1 */}
         <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            {/* Ícono Escudo/Candado Azul Violeta */}
-            <div className="w-11 h-11 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
+          <div className="flex items-center gap-3.5">
+            {/* Ícono con Escudo + Check */}
+            <div className="w-11 h-11 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
@@ -279,14 +270,14 @@ export default function AdminPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Asegura.</h1>
-                <span className="bg-slate-200/60 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-md">
                   v1.0
                 </span>
-                <span className="bg-indigo-600 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="bg-[#4f46e5] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                   ADMIN
                 </span>
               </div>
-              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">SMART BOOKING SYSTEM</p>
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-0.5">SMART BOOKING SYSTEM</p>
             </div>
           </div>
 
@@ -301,27 +292,28 @@ export default function AdminPage() {
           </button>
         </header>
 
-        {/* NAVEGACIÓN PESTAÑAS EXACTAS */}
+        {/* BARRA DE NAVEGACIÓN PESTAÑAS */}
         <div className="flex flex-wrap items-center gap-3 mb-8">
           <button
             onClick={() => setActiveTab("services")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "services"
-                ? "bg-[#4f46e5] text-white shadow-indigo-200 shadow-md"
+                ? "bg-[#4f46e5] text-white shadow-md shadow-indigo-100"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
             }`}
           >
+            {/* Ícono de Bolsa / Maletín */}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
             Servicios
           </button>
 
           <button
             onClick={() => setActiveTab("bookings")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "bookings"
-                ? "bg-[#4f46e5] text-white shadow-indigo-200 shadow-md"
+                ? "bg-[#4f46e5] text-white shadow-md shadow-indigo-100"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
             }`}
           >
@@ -333,9 +325,9 @@ export default function AdminPage() {
 
           <button
             onClick={() => setActiveTab("blocks")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "blocks"
-                ? "bg-[#4f46e5] text-white shadow-indigo-200 shadow-md"
+                ? "bg-[#4f46e5] text-white shadow-md shadow-indigo-100"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
             }`}
           >
@@ -347,9 +339,9 @@ export default function AdminPage() {
 
           <button
             onClick={() => setActiveTab("settings")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "settings"
-                ? "bg-[#4f46e5] text-white shadow-indigo-200 shadow-md"
+                ? "bg-[#4f46e5] text-white shadow-md shadow-indigo-100"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
             }`}
           >
@@ -361,10 +353,10 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* CONTENIDO PESTAÑA SERVICIOS */}
+        {/* PESTAÑA SERVICIOS */}
         {activeTab === "services" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm h-fit">
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs h-fit">
               <h2 className="text-base font-extrabold text-slate-900 mb-0.5">Nuevo Servicio</h2>
               <p className="text-xs text-slate-400 font-medium mb-6">Añade una opción al menú de tus clientes.</p>
 
@@ -377,7 +369,7 @@ export default function AdminPage() {
                     placeholder="Ej. Corte de Cabello"
                     value={newService.name}
                     onChange={(e) => setNewService({ ...newService, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   />
                 </div>
 
@@ -388,7 +380,7 @@ export default function AdminPage() {
                     placeholder="Breve detalle del servicio..."
                     value={newService.description}
                     onChange={(e) => setNewService({ ...newService, description: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all resize-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all resize-none"
                   />
                 </div>
 
@@ -400,7 +392,7 @@ export default function AdminPage() {
                       required
                       value={newService.duration_minutes}
                       onChange={(e) => setNewService({ ...newService, duration_minutes: Number(e.target.value) })}
-                      className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                     />
                   </div>
 
@@ -413,7 +405,7 @@ export default function AdminPage() {
                       placeholder="0.00"
                       value={newService.price}
                       onChange={(e) => setNewService({ ...newService, price: e.target.value })}
-                      className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                     />
                   </div>
                 </div>
@@ -428,12 +420,12 @@ export default function AdminPage() {
               </form>
             </div>
 
-            <div className="md:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+            <div className="md:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs">
               <h2 className="text-base font-extrabold text-slate-900 mb-0.5">Catálogo de Servicios</h2>
               <p className="text-xs text-slate-400 font-medium mb-6">Servicios activos para agendamiento público.</p>
 
               {services.length === 0 ? (
-                <div className="border-2 border-dashed border-slate-100 rounded-2xl py-16 text-center">
+                <div className="border-2 border-dashed border-slate-100/90 rounded-2xl py-16 text-center">
                   <p className="text-xs font-semibold text-slate-400">
                     No has configurado ningún servicio aún.
                   </p>
@@ -474,9 +466,9 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* CONTENIDO PESTAÑA RESERVAS Y CITAS */}
+        {/* PESTAÑA RESERVAS Y CITAS */}
         {activeTab === "bookings" && (
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm">
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs">
             <h2 className="text-lg font-extrabold text-slate-900 mb-0.5">Citas Programadas</h2>
             <p className="text-xs text-slate-400 font-medium mb-8">
               Gestiona y confirma los turnos reservados por tus clientes.
@@ -490,10 +482,10 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* CONTENIDO PESTAÑA BLOQUEOS DE AGENDA */}
+        {/* PESTAÑA BLOQUEOS DE AGENDA */}
         {activeTab === "blocks" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm h-fit">
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs h-fit">
               <h2 className="text-base font-extrabold text-slate-900 mb-0.5">Bloquear Horario</h2>
               <p className="text-xs text-slate-400 font-medium mb-6">Inhabilita un horario o día completo.</p>
 
@@ -505,7 +497,7 @@ export default function AdminPage() {
                     required
                     value={newBlock.blocked_date}
                     onChange={(e) => setNewBlock({ ...newBlock, blocked_date: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   />
                 </div>
 
@@ -514,7 +506,7 @@ export default function AdminPage() {
                   <select
                     value={newBlock.blocked_time}
                     onChange={(e) => setNewBlock({ ...newBlock, blocked_time: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   >
                     <option value="Todo el día">Todo el día</option>
                     <option value="08:00 AM">08:00 AM</option>
@@ -533,10 +525,10 @@ export default function AdminPage() {
                   <label className="block text-xs font-bold text-slate-800 mb-1.5">Motivo (Opcional)</label>
                   <input
                     type="text"
-                    placeholder="Ej. Día festivo, vacaciones, mantenimiento"
+                    placeholder="Ej. Día festivo, mantenimiento"
                     value={newBlock.reason}
                     onChange={(e) => setNewBlock({ ...newBlock, reason: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   />
                 </div>
 
@@ -545,15 +537,12 @@ export default function AdminPage() {
                   disabled={creatingBlock}
                   className="w-full flex items-center justify-center gap-2 py-3 bg-[#e11d48] hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-100 transition-all cursor-pointer mt-2"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                  </svg>
                   {creatingBlock ? "Guardando..." : "Guardar Bloqueo"}
                 </button>
               </form>
             </div>
 
-            <div className="md:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+            <div className="md:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs">
               <h2 className="text-base font-extrabold text-slate-900 mb-0.5">Bloqueos Registrados</h2>
               <p className="text-xs text-slate-400 font-medium mb-6">
                 Estas fechas y horas no estarán disponibles para los clientes.
@@ -592,9 +581,9 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* CONTENIDO PESTAÑA CONFIGURACIÓN */}
+        {/* PESTAÑA CONFIGURACIÓN */}
         {activeTab === "settings" && (
-          <div className="max-w-xl bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm">
+          <div className="max-w-xl bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs">
             <h2 className="text-lg font-extrabold text-slate-900 mb-0.5">Configuración del Negocio</h2>
             <p className="text-xs text-slate-400 font-medium mb-6">
               Personaliza el nombre, canal de WhatsApp, colores y horario laboral general.
@@ -607,7 +596,7 @@ export default function AdminPage() {
                   type="text"
                   value={settings.business_name}
                   onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                  className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   required
                 />
               </div>
@@ -618,7 +607,7 @@ export default function AdminPage() {
                   type="text"
                   value={settings.whatsapp_number}
                   onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                  className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   required
                 />
               </div>
@@ -629,7 +618,7 @@ export default function AdminPage() {
                   <select
                     value={settings.opening_time}
                     onChange={(e) => setSettings({ ...settings, opening_time: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   >
                     <option value="06:00 AM">06:00 AM</option>
                     <option value="07:00 AM">07:00 AM</option>
@@ -643,13 +632,12 @@ export default function AdminPage() {
                   <select
                     value={settings.closing_time}
                     onChange={(e) => setSettings({ ...settings, closing_time: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   >
                     <option value="04:00 PM">04:00 PM</option>
                     <option value="05:00 PM">05:00 PM</option>
                     <option value="06:00 PM">06:00 PM</option>
                     <option value="07:00 PM">07:00 PM</option>
-                    <option value="08:00 PM">08:00 PM</option>
                   </select>
                 </div>
               </div>
@@ -661,7 +649,7 @@ export default function AdminPage() {
                     type="number"
                     value={settings.slot_duration_minutes}
                     onChange={(e) => setSettings({ ...settings, slot_duration_minutes: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                     required
                   />
                 </div>
@@ -679,7 +667,7 @@ export default function AdminPage() {
                       type="text"
                       value={settings.primary_color}
                       onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-                      className="flex-1 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-700 uppercase outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                      className="flex-1 px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 uppercase outline-none focus:bg-white focus:border-indigo-500 transition-all"
                       required
                     />
                   </div>
