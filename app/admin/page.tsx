@@ -7,6 +7,7 @@ import Logo from "@/components/Logo";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const ADMIN_EMAIL = "asegura.admin@gmail.com";
 
 export interface Service {
   id: string;
@@ -71,8 +72,19 @@ export default function AdminPage() {
   const [savingSettings, setSavingSettings] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchInitialData();
-  }, []);
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // Si no hay sesión o el correo no es el autorizado, redirige al login
+    if (!session || session.user.email !== ADMIN_EMAIL) {
+      window.location.href = "/admin/login";
+    } else {
+      fetchInitialData();
+    }
+  };
+
+  checkAuth();
+}, []);
 
   const fetchInitialData = async () => {
     try {
@@ -261,18 +273,30 @@ export default function AdminPage() {
 
        {/* HEADER IDENTICO A LA PRIMERA IMAGEN */}
 <header className="flex items-center justify-between mb-8">
-  <Logo isAdmin={true} />
+        <Logo isAdmin={true} />
 
-  <button
-    onClick={fetchInitialData}
-    className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-slate-50 shadow-xs transition-all cursor-pointer"
-  >
-    <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-    </svg>
-    Actualizar Agenda
-  </button>
-</header>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/admin/login";
+            }}
+            className="text-xs font-semibold text-slate-500 hover:text-red-600 transition-all cursor-pointer px-3 py-2"
+          >
+            Cerrar Sesión
+          </button>
+
+          <button
+            onClick={fetchInitialData}
+            className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-slate-50 shadow-xs transition-all cursor-pointer"
+          >
+            <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Actualizar Agenda
+          </button>
+        </div>
+      </header>
 
         {/* NAVEGACIÓN DE PESTAÑAS */}
         <div className="flex flex-wrap items-center gap-3 mb-8">
