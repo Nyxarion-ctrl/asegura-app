@@ -35,10 +35,10 @@ export interface BusinessSettings {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"services" | "bookings" | "blocks" | "settings">("services");
+  const [activeTab, setActiveTab] = useState<"services" | "bookings" | "blocks" | "settings">("settings");
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Datos
+  // Estados de Datos
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
@@ -231,7 +231,7 @@ export default function AdminPage() {
 
       if (result?.data) {
         setBusinessId(result.data.id);
-        alert("Configuración guardada.");
+        alert("Configuración guardada correctamente.");
       }
     } catch (error: any) {
       alert("Error al guardar: " + error.message);
@@ -252,19 +252,19 @@ export default function AdminPage() {
     <div
       className="min-h-screen bg-[#f8fafc] text-slate-800 relative font-sans antialiased"
       style={{
-        backgroundImage: `radial-gradient(#e2e8f0 1.2px, transparent 1.2px)`,
-        backgroundSize: `24px 24px`,
+        backgroundImage: `radial-gradient(#cbd5e1 1.5px, transparent 1.5px)`,
+        backgroundSize: `20px 20px`,
       }}
     >
       <div className="max-w-6xl mx-auto px-8 py-8">
 
-        {/* HEADER EXACTO DE IMAGEN 1 */}
+        {/* HEADER IDÉNTICO A LA PRIMERA IMAGEN */}
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3.5">
-            {/* Ícono con Escudo + Check */}
-            <div className="w-11 h-11 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            {/* Escudo con Check blanco */}
+            <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-100">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
             <div>
@@ -273,11 +273,13 @@ export default function AdminPage() {
                 <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-md">
                   v1.0
                 </span>
-                <span className="bg-[#4f46e5] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                   ADMIN
                 </span>
               </div>
-              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-0.5">SMART BOOKING SYSTEM</p>
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-0.5">
+                SMART BOOKING SYSTEM
+              </p>
             </div>
           </div>
 
@@ -285,26 +287,25 @@ export default function AdminPage() {
             onClick={fetchInitialData}
             className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-slate-50 shadow-xs transition-all cursor-pointer"
           >
-            <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             Actualizar Agenda
           </button>
         </header>
 
-        {/* BARRA DE NAVEGACIÓN PESTAÑAS */}
+        {/* NAVEGACIÓN DE PESTAÑAS */}
         <div className="flex flex-wrap items-center gap-3 mb-8">
           <button
             onClick={() => setActiveTab("services")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "services"
-                ? "bg-[#4f46e5] text-white shadow-md shadow-indigo-100"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
             }`}
           >
-            {/* Ícono de Bolsa / Maletín */}
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
             Servicios
           </button>
@@ -313,12 +314,12 @@ export default function AdminPage() {
             onClick={() => setActiveTab("bookings")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "bookings"
-                ? "bg-[#4f46e5] text-white shadow-md shadow-indigo-100"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
             Reservas y Citas
           </button>
@@ -327,12 +328,12 @@ export default function AdminPage() {
             onClick={() => setActiveTab("blocks")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "blocks"
-                ? "bg-[#4f46e5] text-white shadow-md shadow-indigo-100"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
             Bloqueos de Agenda
           </button>
@@ -341,13 +342,13 @@ export default function AdminPage() {
             onClick={() => setActiveTab("settings")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "settings"
-                ? "bg-[#4f46e5] text-white shadow-md shadow-indigo-100"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
                 : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
             Configuración
           </button>
@@ -413,7 +414,7 @@ export default function AdminPage() {
                 <button
                   type="submit"
                   disabled={creatingService}
-                  className="w-full py-3 bg-[#4f46e5] hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-2"
+                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-2"
                 >
                   {creatingService ? "Guardando..." : "Guardar Servicio"}
                 </button>
@@ -535,7 +536,7 @@ export default function AdminPage() {
                 <button
                   type="submit"
                   disabled={creatingBlock}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-[#e11d48] hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-100 transition-all cursor-pointer mt-2"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-100 transition-all cursor-pointer mt-2"
                 >
                   {creatingBlock ? "Guardando..." : "Guardar Bloqueo"}
                 </button>
@@ -677,7 +678,7 @@ export default function AdminPage() {
               <button
                 type="submit"
                 disabled={savingSettings}
-                className="w-full py-3 bg-[#4f46e5] hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4"
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4"
               >
                 {savingSettings ? "Guardando..." : "Guardar Cambios"}
               </button>
