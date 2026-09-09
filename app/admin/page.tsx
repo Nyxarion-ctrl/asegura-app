@@ -35,6 +35,7 @@ export interface BusinessSettings {
   slot_duration_minutes: number;
   primary_color: string;
 }
+
 export interface Service {
   id: string;
   business_id: string;
@@ -62,7 +63,7 @@ export interface BusinessSettings {
   primary_color: string;
 }
 
-export default function AdminDashboard() {
+export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"services" | "blocks" | "settings">("services");
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -87,7 +88,7 @@ export default function AdminDashboard() {
     name: "",
     description: "",
     duration_minutes: 30,
-    price: "", // Formato decimal (ej: "15.00")
+    price: "",
   });
 
   // Formulario Bloqueo
@@ -106,13 +107,11 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
 
-      // 1. Obtener la sesión del usuario activo
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 2. Cargar la configuración del negocio del usuario
       const { data: bData, error: bError } = await supabase
         .from("businesses")
         .select("*")
@@ -133,14 +132,12 @@ export default function AdminDashboard() {
           primary_color: bData.primary_color || "#3B82F6",
         });
 
-        // 3. Cargar Servicios
         const { data: sData } = await supabase
           .from("services")
           .select("*")
           .eq("business_id", bData.id);
         if (sData) setServices(sData);
 
-        // 4. Cargar Bloqueos
         const { data: blockData } = await supabase
           .from("blocked_slots")
           .select("*")
@@ -159,7 +156,6 @@ export default function AdminDashboard() {
     e.preventDefault();
     if (!businessId) return;
 
-    // Convertir el precio decimal a centavos (ej: 15.50 -> 1550)
     const priceCents = Math.round(parseFloat(newService.price) * 100);
 
     const payload = {
@@ -296,34 +292,37 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center text-xs text-slate-500 font-medium">
-        Cargando el panel de administración...
+        Cargando panel de administración...
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 antialiased font-sans">
-      {/* Navegación Superior */}
-      <header className="bg-white border-b border-slate-200/80 sticky top-0 z-10">
+      {/* Header con Marca AsegurApp */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-xs">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-sm">
-              {settings.business_name
-                ? settings.business_name.charAt(0).toUpperCase()
-                : "A"}
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-lg shadow-sm">
+              A
             </div>
-            <h1 className="font-extrabold text-slate-900 text-sm tracking-tight">
-              {settings.business_name || "Mi Negocio"}
-            </h1>
+            <div>
+              <h1 className="font-extrabold text-slate-900 text-base leading-none">
+                AsegurApp
+              </h1>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                {settings.business_name || "Panel de Control"}
+              </p>
+            </div>
           </div>
 
-          <nav className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
+          <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               type="button"
               onClick={() => setActiveTab("services")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "services"
-                  ? "bg-white text-indigo-600 shadow-xs"
+                  ? "bg-white text-blue-600 shadow-xs"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -332,9 +331,9 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => setActiveTab("blocks")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "blocks"
-                  ? "bg-white text-indigo-600 shadow-xs"
+                  ? "bg-white text-blue-600 shadow-xs"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -343,9 +342,9 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => setActiveTab("settings")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "settings"
-                  ? "bg-white text-indigo-600 shadow-xs"
+                  ? "bg-white text-blue-600 shadow-xs"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -355,13 +354,12 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      {/* Contenido Principal */}
+      {/* Main Container */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {activeTab === "services" ? (
-          /* Tab 1: Gestión de Servicios */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Formulario Agregar Servicio */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs h-fit">
+            {/* Form Nuevo Servicio */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs h-fit">
               <h2 className="text-sm font-extrabold text-slate-900 mb-1">
                 Nuevo Servicio
               </h2>
@@ -382,7 +380,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewService({ ...newService, name: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                   />
                 </div>
 
@@ -400,7 +398,7 @@ export default function AdminDashboard() {
                         description: e.target.value,
                       })
                     }
-                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50 resize-none"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50 resize-none"
                   />
                 </div>
 
@@ -421,7 +419,7 @@ export default function AdminDashboard() {
                           duration_minutes: Number(e.target.value),
                         })
                       }
-                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                     />
                   </div>
 
@@ -438,7 +436,7 @@ export default function AdminDashboard() {
                       onChange={(e) =>
                         setNewService({ ...newService, price: e.target.value })
                       }
-                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                     />
                   </div>
                 </div>
@@ -446,15 +444,15 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={!businessId}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer disabled:opacity-50 mt-2"
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-100 transition-all cursor-pointer disabled:opacity-50 mt-2"
                 >
                   Guardar Servicio
                 </button>
               </form>
             </div>
 
-            {/* Lista de Servicios */}
-            <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6">
+            {/* Catálogo de Servicios */}
+            <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-xs p-6">
               <h2 className="text-sm font-extrabold text-slate-900 mb-1">
                 Catálogo de Servicios
               </h2>
@@ -473,7 +471,7 @@ export default function AdminDashboard() {
                   {services.map((service) => (
                     <div
                       key={service.id}
-                      className="py-3.5 flex items-center justify-between text-xs hover:bg-slate-50/50 px-2 rounded-lg transition-colors"
+                      className="py-3.5 flex items-center justify-between text-xs hover:bg-slate-50 px-2 rounded-lg transition-colors"
                     >
                       <div>
                         <div className="flex items-center gap-2">
@@ -489,7 +487,7 @@ export default function AdminDashboard() {
                             {service.description}
                           </p>
                         )}
-                        <p className="font-extrabold text-indigo-600 text-xs mt-1">
+                        <p className="font-extrabold text-blue-600 text-xs mt-1">
                           ${(service.price_cents / 100).toFixed(2)}
                         </p>
                       </div>
@@ -508,10 +506,9 @@ export default function AdminDashboard() {
             </div>
           </div>
         ) : activeTab === "blocks" ? (
-          /* Tab 2: Bloqueos de Agenda */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Formulario Crear Bloqueo */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs h-fit">
+            {/* Bloquear Horario */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs h-fit">
               <h2 className="text-sm font-extrabold text-slate-900 mb-1">
                 Bloquear Horario
               </h2>
@@ -531,7 +528,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewBlock({ ...newBlock, blocked_date: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                   />
                 </div>
 
@@ -544,7 +541,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewBlock({ ...newBlock, blocked_time: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                   >
                     <option value="ALL">Día Completo</option>
                     <option value="08:00">08:00 AM</option>
@@ -571,23 +568,23 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewBlock({ ...newBlock, reason: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={!businessId}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer disabled:opacity-50 mt-2"
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-100 transition-all cursor-pointer disabled:opacity-50 mt-2"
                 >
                   Registrar Bloqueo
                 </button>
               </form>
             </div>
 
-            {/* Lista de Bloqueos Registrados */}
-            <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden p-6">
-              <h2 className="text-lg font-extrabold text-slate-900 mb-1">
+            {/* Lista Bloqueos */}
+            <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-xs p-6">
+              <h2 className="text-sm font-extrabold text-slate-900 mb-1">
                 Bloqueos Registrados
               </h2>
               <p className="text-xs text-slate-500 mb-6">
@@ -605,7 +602,7 @@ export default function AdminDashboard() {
                   {blockedSlots.map((slot) => (
                     <div
                       key={slot.id}
-                      className="py-3.5 flex items-center justify-between text-xs hover:bg-slate-50/50 px-2 rounded-lg transition-colors"
+                      className="py-3.5 flex items-center justify-between text-xs hover:bg-slate-50 px-2 rounded-lg transition-colors"
                     >
                       <div>
                         <p className="font-bold text-slate-900">
@@ -635,14 +632,12 @@ export default function AdminDashboard() {
             </div>
           </div>
         ) : (
-          /* Tab 3: Sección de Configuración del Negocio */
-          <div className="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
-            <h2 className="text-lg font-extrabold text-slate-900 mb-1">
+          <div className="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+            <h2 className="text-sm font-extrabold text-slate-900 mb-1">
               Configuración del Negocio
             </h2>
             <p className="text-xs text-slate-500 mb-6">
-              Personaliza el nombre, canal de WhatsApp, colores y horario laboral
-              general.
+              Personaliza el nombre, canal de WhatsApp, colores y horario laboral general.
             </p>
 
             <form onSubmit={handleSaveSettings} className="space-y-4">
@@ -656,7 +651,7 @@ export default function AdminDashboard() {
                   onChange={(e) =>
                     setSettings({ ...settings, business_name: e.target.value })
                   }
-                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                   required
                 />
               </div>
@@ -674,7 +669,7 @@ export default function AdminDashboard() {
                       whatsapp_number: e.target.value,
                     })
                   }
-                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                   required
                 />
               </div>
@@ -689,7 +684,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setSettings({ ...settings, opening_time: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                     required
                   >
                     <option value="06:00">06:00 AM</option>
@@ -709,7 +704,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setSettings({ ...settings, closing_time: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                     required
                   >
                     <option value="16:00">04:00 PM</option>
@@ -740,7 +735,7 @@ export default function AdminDashboard() {
                         slot_duration_minutes: Number(e.target.value),
                       })
                     }
-                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50"
                     required
                   />
                 </div>
@@ -770,7 +765,7 @@ export default function AdminDashboard() {
                           primary_color: e.target.value,
                         })
                       }
-                      className="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all bg-slate-50/50 uppercase"
+                      className="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-slate-50/50 uppercase"
                       required
                     />
                   </div>
@@ -789,7 +784,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={savingSettings}
-                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer disabled:opacity-50"
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-100 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {savingSettings ? "Guardando..." : "Guardar Cambios"}
                 </button>
