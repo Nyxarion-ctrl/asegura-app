@@ -657,7 +657,7 @@ useEffect(() => {
               </div>
             </div>
 
-            <div>
+           <div className="w-full">
               <label className="block text-xs font-bold text-slate-800 mb-1.5">Duración del Turno (Minutos)</label>
               <input
                 type="number"
@@ -679,7 +679,6 @@ useEffect(() => {
         </div>
       )}
     </div>
+  </div>
   );
 }
-  </div>
-);
