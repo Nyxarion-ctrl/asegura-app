@@ -669,7 +669,7 @@ useEffect(() => {
             />
           </div>
 
-          <button
+         <button
             type="submit"
             disabled={savingSettings}
             className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4 disabled:opacity-50"
@@ -677,8 +677,7 @@ useEffect(() => {
             {savingSettings ? "Guardando..." : "Guardar Cambios"}
           </button>
         </form>
-     </div>
-      )}
-    </div>
-  );
-}
+      </div>
+    )}
+  </div>
+);
