@@ -17,13 +17,30 @@ interface Service {
   cost?: number | string;
 }
 
+interface BusinessSettings {
+  business_name: string;
+  item_singular: string;
+  item_plural: string;
+  action_title: string;
+  action_subtitle: string;
+}
+
+const DEFAULT_SETTINGS: BusinessSettings = {
+  business_name: "Asegura",
+  item_singular: "Clase",
+  item_plural: "Clases",
+  action_title: "Reserva tu Clase en Segundos",
+  action_subtitle: "Selecciona el horario disponible y confirma tu solicitud sin complicaciones.",
+};
+
 const TIME_SLOTS = ["09:00 AM", "10:30 AM", "01:00 PM", "03:00 PM", "04:30 PM"];
 
 export default function Home() {
   const [step, setStep] = useState(1);
+  const [config, setConfig] = useState<BusinessSettings>(DEFAULT_SETTINGS);
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [loadingServices, setLoadingServices] = useState(true);
+  const [loadingData, setLoadingData] = useState(true);
 
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -38,6 +55,54 @@ export default function Home() {
   
   const todayDateStr = new Date().toISOString().split("T")[0];
 
+  // Cargar Configuración de la base de datos y Lista de Servicios
+  useEffect(() => {
+    let isMounted = true;
+    async function loadInitialData() {
+      try {
+        setLoadingData(true);
+
+        // 1. Obtener ajustes desde la base de datos (Admin)
+        const { data: settingsData } = await supabase
+          .from("settings")
+          .select("*")
+          .single();
+
+        if (isMounted && settingsData) {
+          setConfig({
+            business_name: settingsData.business_name || DEFAULT_SETTINGS.business_name,
+            item_singular: settingsData.item_singular || DEFAULT_SETTINGS.item_singular,
+            item_plural: settingsData.item_plural || DEFAULT_SETTINGS.item_plural,
+            action_title: settingsData.action_title || DEFAULT_SETTINGS.action_title,
+            action_subtitle: settingsData.action_subtitle || DEFAULT_SETTINGS.action_subtitle,
+          });
+        }
+
+        // 2. Obtener lista de servicios / clases
+        const { data: servicesData, error: servicesError } = await supabase
+          .from("services")
+          .select("*");
+
+        if (servicesError) throw servicesError;
+
+        if (isMounted && servicesData && servicesData.length > 0) {
+          setServices(servicesData);
+          setSelectedService(servicesData[0]);
+        }
+      } catch (err) {
+        console.error("Error al cargar datos iniciales:", err);
+      } finally {
+        if (isMounted) setLoadingData(false);
+      }
+    }
+
+    loadInitialData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Verificar Disponibilidad de Horarios al seleccionar fecha
   useEffect(() => {
     if (!selectedDate) {
       setReservedTimes([]);
@@ -66,33 +131,6 @@ export default function Home() {
 
     checkAvailability();
   }, [selectedDate]);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchServices() {
-      try {
-        setLoadingServices(true);
-        const { data, error } = await supabase
-          .from("services")
-          .select("*");
-
-        if (error) throw error;
-
-        if (isMounted && data && data.length > 0) {
-          setServices(data);
-          setSelectedService(data[0]);
-        }
-      } catch (err) {
-        console.error("Error al cargar servicios:", err);
-      } finally {
-        if (isMounted) setLoadingServices(false);
-      }
-    }
-    fetchServices();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const getServicePrice = (srv: Service | null) => {
     if (!srv) return 0;
@@ -155,7 +193,7 @@ export default function Home() {
           client_name: formData.name.trim(),
           client_email: formData.email.trim(),
           client_phone: formData.phone.trim(),
-          service_name: selectedService?.name || "Consulta Inicial / Valoración",
+          service_name: selectedService?.name || `${config.itemSingular} General`,
           duration: dynamicDuration,
           price: dynamicPrice,
           service_price: dynamicPrice,
@@ -168,9 +206,9 @@ export default function Home() {
       if (error) throw error;
       setIsSubmitted(true);
     } catch (err: any) {
-      console.error("Error al guardar cita:", err);
+      console.error("Error al guardar reserva:", err);
       setErrorMessage(
-        err?.message || "No se pudo guardar la cita. Inténtalo de nuevo."
+        err?.message || "No se pudo guardar la reserva. Inténtalo de nuevo."
       );
     } finally {
       setIsLoading(false);
@@ -200,10 +238,10 @@ export default function Home() {
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 md:py-12">
         <div className="text-center max-w-xl mx-auto mb-10">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900">
-            Reserva tu Cita en Segundos
+            {config.actionTitle}
           </h1>
           <p className="mt-2 text-slate-500 text-sm md:text-base leading-relaxed">
-            Selecciona el servicio de tu preferencia, elige el horario disponible y confirma tu solicitud sin complicaciones.
+            {config.actionSubtitle}
           </p>
         </div>
 
@@ -220,7 +258,7 @@ export default function Home() {
                 ></div>
 
                 {[
-                  { num: 1, label: "Servicio" },
+                  { num: 1, label: config.itemSingular },
                   { num: 2, label: "Fecha y Hora" },
                   { num: 3, label: "Tus Datos" },
                 ].map((s) => (
@@ -243,12 +281,12 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Paso 1: Servicio */}
+              {/* Paso 1: Selección */}
               {step === 1 && (
                 <div className="space-y-4">
-                  <h2 className="text-lg font-bold text-slate-900 mb-4">1. Selecciona un Servicio</h2>
+                  <h2 className="text-lg font-bold text-slate-900 mb-4">1. Selecciona una {config.itemSingular}</h2>
                   
-                  {loadingServices ? (
+                  {loadingData ? (
                     <div className="space-y-3">
                       {[1, 2, 3].map((i) => (
                         <div key={i} className="h-20 bg-slate-100/80 rounded-2xl animate-pulse"></div>
@@ -256,7 +294,7 @@ export default function Home() {
                     </div>
                   ) : services.length === 0 ? (
                     <p className="text-sm text-slate-500 text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                      No hay servicios disponibles en este momento.
+                      No hay opciones disponibles en este momento.
                     </p>
                   ) : (
                     <div className="space-y-3">
@@ -283,7 +321,7 @@ export default function Home() {
                               </div>
                               <div>
                                 <p className="font-bold text-slate-900 text-sm">{srv.name}</p>
-                                <p className="text-xs text-slate-500 mt-0.5">Duración aprox: {duration}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Duración: {duration}</p>
                               </div>
                             </div>
                             <span className="text-base font-extrabold text-slate-900">{formatPrice(price)}</span>
@@ -309,7 +347,7 @@ export default function Home() {
                   <h2 className="text-lg font-bold text-slate-900">2. Elige Fecha y Horario</h2>
                   
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Fecha de la Cita</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Fecha de la Reserva</label>
                     <input
                       type="date"
                       min={todayDateStr}
@@ -327,7 +365,7 @@ export default function Home() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                       {isDayBlocked ? (
                         <div className="col-span-full p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-medium text-center">
-                          🚫 Esta fecha no está disponible para citas. Por favor selecciona otro día.
+                          🚫 Esta fecha no está disponible. Por favor selecciona otro día.
                         </div>
                       ) : (
                         TIME_SLOTS.map((slot) => {
@@ -446,10 +484,10 @@ export default function Home() {
                       {isLoading ? (
                         <>
                           <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-                          <span>Guardando Cita...</span>
+                          <span>Confirmando...</span>
                         </>
                       ) : (
-                        "Confirmar Cita"
+                        "Confirmar Reserva"
                       )}
                     </button>
                   </div>
@@ -464,14 +502,14 @@ export default function Home() {
               <h3 className="text-base font-bold text-slate-100 mb-6 pb-4 border-b border-slate-800 flex items-center justify-between">
                 <span>Resumen de Reserva</span>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 bg-indigo-950/90 px-2.5 py-1 rounded-md border border-indigo-800/60">
-                  ASEGURA
+                  {config.business_name}
                 </span>
               </h3>
 
               <div className="space-y-5 text-sm">
                 <div>
-                  <span className="text-xs text-slate-400 block mb-1">Servicio Seleccionado</span>
-                  <p className="font-bold text-slate-100 text-base">{selectedService?.name || "Selecciona un servicio"}</p>
+                  <span className="text-xs text-slate-400 block mb-1">{config.itemSingular} Seleccionada</span>
+                  <p className="font-bold text-slate-100 text-base">{selectedService?.name || `Selecciona una ${config.itemSingular.toLowerCase()}`}</p>
                   <p className="text-xs text-indigo-400 font-medium mt-0.5">{getServiceDuration(selectedService)}</p>
                 </div>
 
@@ -508,7 +546,7 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-black text-slate-900">¡Cita Guardada Exitosamente!</h2>
+            <h2 className="text-2xl font-black text-slate-900">¡Reserva Confirmada!</h2>
             <p className="text-slate-500 text-sm mt-2">
               Los datos se han registrado correctamente en el sistema.
             </p>
