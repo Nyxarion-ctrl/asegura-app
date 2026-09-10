@@ -35,6 +35,9 @@ export interface BusinessSettings {
   closing_time: string;
   slot_duration_minutes: number;
   primary_color: string;
+buffer_minutes?: number;
+  currency?: string;
+  working_days?: string[];
 }
 
 interface TimeSelectProps {
@@ -113,14 +116,17 @@ export default function AdminPage() {
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
-  const [settings, setSettings] = useState<BusinessSettings>({
-    business_name: "Asegura Demo",
-    whatsapp_number: "8090000000",
-    opening_time: "06:00 AM",
-    closing_time: "04:00 PM",
-    slot_duration_minutes: 60,
-    primary_color: "#3B82F6",
-  });
+ const [settings, setSettings] = useState<BusinessSettings>({
+  business_name: "Asegura Demo",
+  whatsapp_number: "8090000000",
+  opening_time: "06:00 AM",
+  closing_time: "04:00 PM",
+  slot_duration_minutes: 60,
+  primary_color: "#3B82F6",
+  buffer_minutes: 0,
+  currency: "DOP $",
+  working_days: ["lun", "mar", "mie", "jue", "vie", "sab"],
+});
 
   // Formularios
   const [newService, setNewService] = useState({
@@ -705,7 +711,76 @@ useEffect(() => {
                 required
               />
             </div>
+{/* Descanso entre Citas y Moneda */}
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                Descanso entre Citas (Minutos)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="5"
+                value={settings.buffer_minutes ?? 0}
+                onChange={(e) => setSettings({ ...settings, buffer_minutes: Number(e.target.value) })}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+              />
+            </div>
 
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">Moneda</label>
+              <select
+                value={settings.currency || 'DOP $'}
+                onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+              >
+                <option value="DOP $">DOP ($)</option>
+                <option value="USD $">USD ($)</option>
+                <option value="EUR €">EUR (€)</option>
+                <option value="MXN $">MXN ($)</option>
+                <option value="COP $">COP ($)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Días Laborables */}
+          <div className="mt-4">
+            <label className="block text-xs font-bold text-slate-800 mb-2">Días Laborables</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'lun', label: 'Lun' },
+                { id: 'mar', label: 'Mar' },
+                { id: 'mie', label: 'Mié' },
+                { id: 'jue', label: 'Jue' },
+                { id: 'vie', label: 'Vie' },
+                { id: 'sab', label: 'Sáb' },
+                { id: 'dom', label: 'Dom' },
+              ].map((day) => {
+                const activeDays = settings.working_days || ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
+                const isSelected = activeDays.includes(day.id);
+
+                return (
+                  <button
+                    key={day.id}
+                    type="button"
+                    onClick={() => {
+                      const nextDays = isSelected
+                        ? activeDays.filter((d) => d !== day.id)
+                        : [...activeDays, day.id];
+                      setSettings({ ...settings, working_days: nextDays });
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
+                  >
+                    {day.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
             <button
               type="submit"
               disabled={savingSettings}
