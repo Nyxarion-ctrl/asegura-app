@@ -215,37 +215,51 @@ useEffect(() => {
   };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavingSettings(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  e.preventDefault();
+  setSavingSettings(true);
 
-      const payload = {
-        owner_id: user.id,
-        business_name: settings.business_name,
-        whatsapp_number: settings.whatsapp_number,
-        opening_time: settings.opening_time,
-        closing_time: settings.closing_time,
-        slot_duration_minutes: settings.slot_duration_minutes,
-        primary_color: settings.primary_color,
-      };
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
+    const payload = {
+      owner_id: user.id,
+      business_name: settings.business_name,
+      whatsapp_number: settings.whatsapp_number,
+      opening_time: settings.opening_time,
+      closing_time: settings.closing_time,
+      slot_duration_minutes: settings.slot_duration_minutes,
+      primary_color: settings.primary_color,
+    };
+
+    let result;
     if (businessId) {
-  result = await supabase
-    .from("businesses")
-    .update(payload)
-    .eq("id", businessId)
-    .select()
-    .single();
+      result = await supabase
+        .from("businesses")
+        .update(payload)
+        .eq("id", businessId)
+        .select()
+        .single();
+    } else {
+      result = await supabase
+        .from("businesses")
+        .insert([payload])
+        .select()
+        .single();
+    }
 
-  if (result.error) {
-    alert("Error al guardar: " + result.error.message);
-  } else {
-    alert("¡Configuración guardada exitosamente!");
-    fetchInitialData();
+    if (result.error) {
+      alert("Error al guardar: " + result.error.message);
+    } else {
+      if (result.data) setBusinessId(result.data.id);
+      alert("¡Configuración guardada exitosamente!");
+      fetchInitialData();
+    }
+  } catch (error: any) {
+    alert("Error general al guardar: " + error.message);
+  } finally {
+    setSavingSettings(false);
   }
-}
 };
     
   if (loading) {
