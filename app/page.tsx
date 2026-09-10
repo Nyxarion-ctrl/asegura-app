@@ -19,18 +19,18 @@ interface Service {
 
 interface BusinessSettings {
   business_name: string;
-  item_singular: string;
-  item_plural: string;
-  action_title: string;
-  action_subtitle: string;
+  itemSingular: string;
+  itemPlural: string;
+  actionTitle: string;
+  actionSubtitle: string;
 }
 
 const DEFAULT_SETTINGS: BusinessSettings = {
   business_name: "Asegura",
-  item_singular: "Clase",
-  item_plural: "Clases",
-  action_title: "Reserva tu Clase en Segundos",
-  action_subtitle: "Selecciona el horario disponible y confirma tu solicitud sin complicaciones.",
+  itemSingular: "Clase",
+  itemPlural: "Clases",
+  actionTitle: "Reserva tu Clase en Segundos",
+  actionSubtitle: "Selecciona el horario disponible y confirma tu solicitud sin complicaciones.",
 };
 
 const TIME_SLOTS = ["09:00 AM", "10:30 AM", "01:00 PM", "03:00 PM", "04:30 PM"];
@@ -71,10 +71,10 @@ export default function Home() {
         if (isMounted && settingsData) {
           setConfig({
             business_name: settingsData.business_name || DEFAULT_SETTINGS.business_name,
-            item_singular: settingsData.item_singular || DEFAULT_SETTINGS.item_singular,
-            item_plural: settingsData.item_plural || DEFAULT_SETTINGS.item_plural,
-            action_title: settingsData.action_title || DEFAULT_SETTINGS.action_title,
-            action_subtitle: settingsData.action_subtitle || DEFAULT_SETTINGS.action_subtitle,
+            itemSingular: settingsData.item_singular || settingsData.itemSingular || DEFAULT_SETTINGS.itemSingular,
+            itemPlural: settingsData.item_plural || settingsData.itemPlural || DEFAULT_SETTINGS.itemPlural,
+            actionTitle: settingsData.action_title || settingsData.actionTitle || DEFAULT_SETTINGS.actionTitle,
+            actionSubtitle: settingsData.action_subtitle || settingsData.actionSubtitle || DEFAULT_SETTINGS.actionSubtitle,
           });
         }
 
@@ -531,7 +531,7 @@ export default function Home() {
 
               <div className="mt-8 p-4 rounded-2xl bg-slate-800/50 border border-slate-700/60 flex items-start gap-3 backdrop-blur-sm">
                 <svg className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
                 <p className="text-xs text-slate-300 leading-relaxed font-normal">
                   Reserva garantizada. Recibirás un recordatorio por correo electrónico y WhatsApp una vez confirmada.
