@@ -67,7 +67,7 @@ export default function Home() {
     checkAvailability();
   }, [selectedDate]);
 
-useEffect(() => {
+  useEffect(() => {
     let isMounted = true;
     async function fetchServices() {
       try {
@@ -272,7 +272,7 @@ useEffect(() => {
                             className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between group cursor-pointer ${
                               isSelected
                                 ? "border-indigo-600 bg-indigo-50/40 shadow-sm"
-                                ? "border-slate-100 hover:border-slate-300 bg-white hover:bg-slate-50/50"
+                                : "border-slate-100 hover:border-slate-300 bg-white hover:bg-slate-50/50"
                             }`}
                           >
                             <div className="flex items-center gap-3">
