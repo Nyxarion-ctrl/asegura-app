@@ -67,7 +67,7 @@ export default function Home() {
     checkAvailability();
   }, [selectedDate]);
 
-  useEffect(() => {
+useEffect(() => {
     let isMounted = true;
     async function fetchServices() {
       try {
@@ -84,7 +84,7 @@ export default function Home() {
         }
       } catch (err) {
         console.error("Error al cargar servicios:", err);
-      } font-medium {
+      } finally {
         if (isMounted) setLoadingServices(false);
       }
     }
