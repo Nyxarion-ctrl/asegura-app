@@ -41,9 +41,10 @@ interface TimeSelectProps {
   label: string;
   value: string;
   onChange: (val: string) => void;
+  includeAllDay?: boolean;
 }
 
-function TimeSelect({ label, value, onChange }: TimeSelectProps) {
+function TimeSelect({ label, value, onChange, includeAllDay = false }: TimeSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const hours = Array.from({ length: 24 }).map((_, i) => {
@@ -51,6 +52,8 @@ function TimeSelect({ label, value, onChange }: TimeSelectProps) {
     const ampm = i < 12 ? "AM" : "PM";
     return `${hour.toString().padStart(2, "0")}:00 ${ampm}`;
   });
+  
+  const options = includeAllDay ? ["Todo el día", ...hours] : hours;
 
   return (
     <div className="relative">
@@ -75,7 +78,7 @@ function TimeSelect({ label, value, onChange }: TimeSelectProps) {
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
           <div className="absolute z-20 mt-1.5 w-full max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl shadow-slate-200/50 py-1 text-xs">
-            {hours.map((time) => (
+           {options.map((time) => (
               <button
                 key={time}
                 type="button"
@@ -582,25 +585,12 @@ useEffect(() => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">Horario a bloquear</label>
-                  <select
-                    value={newBlock.blocked_time}
-                    onChange={(e) => setNewBlock({ ...newBlock, blocked_time: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                  >
-                    <option value="Todo el día">Todo el día</option>
-                    <option value="08:00 AM">08:00 AM</option>
-                    <option value="09:00 AM">09:00 AM</option>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="11:00 AM">11:00 AM</option>
-                    <option value="12:00 PM">12:00 PM</option>
-                    <option value="01:00 PM">01:00 PM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="03:00 PM">03:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                  </select>
-                </div>
+           <TimeSelect
+            label="Horario a bloquear"
+            value={newBlock.blocked_time || "Todo el día"}
+            onChange={(val) => setNewBlock({ ...newBlock, blocked_time: val })}
+            includeAllDay={true}
+          />
 
                 <div>
                   <label className="block text-xs font-bold text-slate-800 mb-1.5">Motivo (Opcional)</label>
