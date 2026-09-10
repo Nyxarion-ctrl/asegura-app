@@ -232,17 +232,17 @@ useEffect(() => {
       primary_color: settings.primary_color,
     };
 
-    let result;
+   let result;
     if (businessId) {
       result = await supabase
-        .from("businesses")
+        .from("business_settings")
         .update(payload)
         .eq("id", businessId)
         .select()
         .single();
     } else {
       result = await supabase
-        .from("businesses")
+        .from("business_settings")
         .insert([payload])
         .select()
         .single();
