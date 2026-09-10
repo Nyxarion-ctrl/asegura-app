@@ -231,7 +231,7 @@ useEffect(() => {
         primary_color: settings.primary_color,
       };
 
-     if (businessId) {
+    if (businessId) {
   result = await supabase
     .from("businesses")
     .update(payload)
@@ -246,8 +246,8 @@ useEffect(() => {
     fetchInitialData();
   }
 }
-  };
-
+};
+    
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-xs font-semibold text-slate-400">
