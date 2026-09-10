@@ -11,8 +11,10 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 interface Service {
   id: string;
   name: string;
-  duration: string;
-  price: number | string;
+  duration?: string | number;
+  duration_minutes?: number;
+  price?: number | string;
+  cost?: number | string;
 }
 
 const TIME_SLOTS = ["09:00 AM", "10:30 AM", "01:00 PM", "03:00 PM", "04:30 PM"];
@@ -72,8 +74,7 @@ export default function Home() {
         setLoadingServices(true);
         const { data, error } = await supabase
           .from("services")
-          .select("*")
-          .order("price", { ascending: true });
+          .select("*");
 
         if (error) throw error;
 
@@ -83,7 +84,7 @@ export default function Home() {
         }
       } catch (err) {
         console.error("Error al cargar servicios:", err);
-      } finally {
+      } font-medium {
         if (isMounted) setLoadingServices(false);
       }
     }
@@ -93,8 +94,20 @@ export default function Home() {
     };
   }, []);
 
+  const getServicePrice = (srv: Service | null) => {
+    if (!srv) return 0;
+    return srv.price ?? srv.cost ?? 0;
+  };
+
+  const getServiceDuration = (srv: Service | null) => {
+    if (!srv) return "-";
+    const dur = srv.duration ?? srv.duration_minutes;
+    if (!dur) return "-";
+    return typeof dur === "number" ? `${dur} min` : String(dur);
+  };
+
   const formatPrice = (price: number | string | undefined) => {
-    if (price === undefined || price === null) return "$0";
+    if (price === undefined || price === null || price === "") return "$0";
     if (typeof price === "number") return `$${price}`;
     return price.startsWith("$") ? price : `$${price}`;
   };
@@ -133,12 +146,9 @@ export default function Home() {
         return;
       }
 
-      const svc = selectedService as any;
-      const rawPrice = svc?.price ?? svc?.cost ?? 25;
-      const rawDuration = svc?.duration ?? svc?.time ?? svc?.duration_text ?? "30 min";
-
+      const rawPrice = getServicePrice(selectedService);
       const dynamicPrice = formatPrice(rawPrice);
-      const dynamicDuration = String(rawDuration);
+      const dynamicDuration = getServiceDuration(selectedService);
 
       const { error } = await supabase.from("appointments").insert([
         {
@@ -168,7 +178,13 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/60 bg-grid-pattern text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+    <div 
+      className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white"
+      style={{
+        backgroundImage: `radial-gradient(#cbd5e1 1px, transparent 1px)`,
+        backgroundSize: '24px 24px'
+      }}
+    >
       {/* Header Minimalista */}
       <header className="w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -246,6 +262,8 @@ export default function Home() {
                     <div className="space-y-3">
                       {services.map((srv) => {
                         const isSelected = selectedService?.id === srv.id;
+                        const price = getServicePrice(srv);
+                        const duration = getServiceDuration(srv);
                         return (
                           <button
                             key={srv.id}
@@ -254,7 +272,7 @@ export default function Home() {
                             className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between group cursor-pointer ${
                               isSelected
                                 ? "border-indigo-600 bg-indigo-50/40 shadow-sm"
-                                : "border-slate-100 hover:border-slate-300 bg-white hover:bg-slate-50/50"
+                                ? "border-slate-100 hover:border-slate-300 bg-white hover:bg-slate-50/50"
                             }`}
                           >
                             <div className="flex items-center gap-3">
@@ -265,10 +283,10 @@ export default function Home() {
                               </div>
                               <div>
                                 <p className="font-bold text-slate-900 text-sm">{srv.name}</p>
-                                <p className="text-xs text-slate-500 mt-0.5">Duración aprox: {srv.duration}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Duración aprox: {duration}</p>
                               </div>
                             </div>
-                            <span className="text-base font-extrabold text-slate-900">{formatPrice(srv.price)}</span>
+                            <span className="text-base font-extrabold text-slate-900">{formatPrice(price)}</span>
                           </button>
                         );
                       })}
@@ -454,7 +472,7 @@ export default function Home() {
                 <div>
                   <span className="text-xs text-slate-400 block mb-1">Servicio Seleccionado</span>
                   <p className="font-bold text-slate-100 text-base">{selectedService?.name || "Selecciona un servicio"}</p>
-                  <p className="text-xs text-indigo-400 font-medium mt-0.5">{selectedService?.duration || "-"}</p>
+                  <p className="text-xs text-indigo-400 font-medium mt-0.5">{getServiceDuration(selectedService)}</p>
                 </div>
 
                 <div className="pt-4 border-t border-slate-800/80">
@@ -469,7 +487,7 @@ export default function Home() {
 
                 <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
                   <span className="text-slate-400 font-medium">Costo Total</span>
-                  <span className="text-3xl font-black text-white">{formatPrice(selectedService?.price)}</span>
+                  <span className="text-3xl font-black text-white">{formatPrice(getServicePrice(selectedService))}</span>
                 </div>
               </div>
 
