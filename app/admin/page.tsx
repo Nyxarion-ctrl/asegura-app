@@ -658,30 +658,24 @@ useEffect(() => {
                 </div>
               </div>
 
-            <div className="w-full">
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">Duración del Turno (Minutos)</label>
-                  <input
-                    type="number"
-                    value={settings.slot_duration_minutes}
-                    onChange={(e) => setSettings({ ...settings, slot_duration_minutes: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                    required
-                  />
-                </div>
-
-         <button
-  type="submit"
-  disabled={savingSettings}
-  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4 disabled:opacity-50"
->
-  {savingSettings ? "Guardando..." : "Guardar Cambios"}
-</button>
-            </form>
+          <div className="w-full">
+            <label className="block text-xs font-bold text-slate-800 mb-1.5">Duración del Turno (Minutos)</label>
+            <input
+              type="number"
+              value={settings.slot_duration_minutes}
+              onChange={(e) => setSettings({ ...settings, slot_duration_minutes: Number(e.target.value) })}
+              className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+              required
+            />
           </div>
-        )}
 
+          <button
+            type="submit"
+            disabled={savingSettings}
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4 disabled:opacity-50"
+          >
+            {savingSettings ? "Guardando..." : "Guardar Cambios"}
+          </button>
+        </form>
       </div>
-    </div>
-  );
-}
+    )}
