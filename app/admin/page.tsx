@@ -598,86 +598,88 @@ useEffect(() => {
         )}
 
         {/* PESTAÑA CONFIGURACIÓN */}
-       {activeTab === "settings" && currentUserEmail === SUPER_ADMIN_EMAIL && (
-          <div className="max-w-xl bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs">
-            <h2 className="text-lg font-extrabold text-slate-900 mb-0.5">Configuración del Negocio</h2>
-            <p className="text-xs text-slate-400 font-medium mb-6">
-              Personaliza el nombre, canal de WhatsApp, colores y horario laboral general.
-            </p>
+      {activeTab === "settings" && currentUserEmail === SUPER_ADMIN_EMAIL && (
+        <div className="max-w-xl bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs">
+          <h2 className="text-lg font-extrabold text-slate-900 mb-0.5">Configuración del Negocio</h2>
+          <p className="text-xs text-slate-400 font-medium mb-6">
+            Personaliza el nombre, canal de WhatsApp y horario laboral general.
+          </p>
 
-            <form onSubmit={handleSaveSettings} className="space-y-5">
+          <form onSubmit={handleSaveSettings} className="space-y-5">
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">Nombre del Negocio</label>
+              <input
+                type="text"
+                value={settings.business_name}
+                onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">Número de WhatsApp (Notificaciones)</label>
+              <input
+                type="text"
+                value={settings.whatsapp_number}
+                onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-800 mb-1.5">Nombre del Negocio</label>
-                <input
-                  type="text"
-                  value={settings.business_name}
-                  onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">Hora de Apertura</label>
+                <select
+                  value={settings.opening_time}
+                  onChange={(e) => setSettings({ ...settings, opening_time: e.target.value })}
                   className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                  required
-                />
+                >
+                  <option value="06:00 AM">06:00 AM</option>
+                  <option value="07:00 AM">07:00 AM</option>
+                  <option value="08:00 AM">08:00 AM</option>
+                  <option value="09:00 AM">09:00 AM</option>
+                </select>
               </div>
-
               <div>
-                <label className="block text-xs font-bold text-slate-800 mb-1.5">Número de WhatsApp (Notificaciones)</label>
-                <input
-                  type="text"
-                  value={settings.whatsapp_number}
-                  onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">Hora de Cierre</label>
+                <select
+                  value={settings.closing_time}
+                  onChange={(e) => setSettings({ ...settings, closing_time: e.target.value })}
                   className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                  required
-                />
+                >
+                  <option value="04:00 PM">04:00 PM</option>
+                  <option value="05:00 PM">05:00 PM</option>
+                  <option value="06:00 PM">06:00 PM</option>
+                  <option value="07:00 PM">07:00 PM</option>
+                </select>
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">Hora de Apertura</label>
-                  <select
-                    value={settings.opening_time}
-                    onChange={(e) => setSettings({ ...settings, opening_time: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                  >
-                    <option value="06:00 AM">06:00 AM</option>
-                    <option value="07:00 AM">07:00 AM</option>
-                    <option value="08:00 AM">08:00 AM</option>
-                    <option value="09:00 AM">09:00 AM</option>
-                  </select>
-                </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">Duración del Turno (Minutos)</label>
+              <input
+                type="number"
+                value={settings.slot_duration_minutes}
+                onChange={(e) => setSettings({ ...settings, slot_duration_minutes: Number(e.target.value) })}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                required
+              />
+            </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">Hora de Cierre</label>
-                  <select
-                    value={settings.closing_time}
-                    onChange={(e) => setSettings({ ...settings, closing_time: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                  >
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="05:00 PM">05:00 PM</option>
-                    <option value="06:00 PM">06:00 PM</option>
-                    <option value="07:00 PM">07:00 PM</option>
-                  </select>
-                </div>
-              </div>
-
-          <div className="w-full">
-            <label className="block text-xs font-bold text-slate-800 mb-1.5">Duración del Turno (Minutos)</label>
-            <input
-              type="number"
-              value={settings.slot_duration_minutes}
-              onChange={(e) => setSettings({ ...settings, slot_duration_minutes: Number(e.target.value) })}
-              className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-              required
-            />
-          </div>
-
-         <button
-            type="submit"
-            disabled={savingSettings}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4 disabled:opacity-50"
-          >
-            {savingSettings ? "Guardando..." : "Guardar Cambios"}
-          </button>
-        </form>
-      </div>
-    )}
+            <button
+              type="submit"
+              disabled={savingSettings}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4 disabled:opacity-50"
+            >
+              {savingSettings ? "Guardando..." : "Guardar Cambios"}
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
   </div>
 );
