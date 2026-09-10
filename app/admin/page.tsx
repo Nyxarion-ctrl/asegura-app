@@ -7,7 +7,7 @@ import Logo from "@/components/Logo";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-const ADMIN_EMAIL = "asegura.admin@gmail.com";
+const CLIENT_ADMIN_EMAIL = "asegura.admin@gmail.com";
 const SUPER_ADMIN_EMAIL = "cristianmanuelhd@gmail.com";
 
 export interface Service {
