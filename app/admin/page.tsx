@@ -37,6 +37,71 @@ export interface BusinessSettings {
   primary_color: string;
 }
 
+interface TimeSelectProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+}
+
+function TimeSelect({ label, value, onChange }: TimeSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const hours = Array.from({ length: 24 }).map((_, i) => {
+    const hour = i % 12 === 0 ? 12 : i % 12;
+    const ampm = i < 12 ? "AM" : "PM";
+    return `${hour.toString().padStart(2, "0")}:00 ${ampm}`;
+  });
+
+  return (
+    <div className="relative">
+      <label className="block text-xs font-bold text-slate-800 mb-1.5">{label}</label>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-3.5 py-2.5 bg-slate-50/80 hover:bg-slate-100/80 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 transition-all cursor-pointer focus:ring-2 focus:ring-indigo-500/20"
+      >
+        <span>{value || "Seleccionar..."}</span>
+        <svg
+          className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="absolute z-20 mt-1.5 w-full max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl shadow-slate-200/50 py-1 text-xs">
+            {hours.map((time) => (
+              <button
+                key={time}
+                type="button"
+                onClick={() => {
+                  onChange(time);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-3.5 py-2 transition-colors flex items-center justify-between ${
+                  value === time
+                    ? "bg-indigo-50 text-indigo-600 font-bold"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {time}
+                {value === time && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                )}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"services" | "bookings" | "blocks" | "settings">("settings");
   const [loading, setLoading] = useState<boolean>(true);
