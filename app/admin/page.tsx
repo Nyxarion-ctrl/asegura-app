@@ -231,31 +231,21 @@ useEffect(() => {
         primary_color: settings.primary_color,
       };
 
-      let result;
-      if (businessId) {
-        result = await supabase
-          .from("businesses")
-          .update(payload)
-          .eq("id", businessId)
-          .select()
-          .single();
-      } else {
-        result = await supabase
-          .from("businesses")
-          .insert([payload])
-          .select()
-          .single();
-      }
+     if (businessId) {
+  result = await supabase
+    .from("businesses")
+    .update(payload)
+    .eq("id", businessId)
+    .select()
+    .single();
 
-      if (result?.data) {
-        setBusinessId(result.data.id);
-        alert("Configuración guardada correctamente.");
-      }
-    } catch (error: any) {
-      alert("Error al guardar: " + error.message);
-    } finally {
-      setSavingSettings(false);
-    }
+  if (result.error) {
+    alert("Error al guardar: " + result.error.message);
+  } else {
+    alert("¡Configuración guardada exitosamente!");
+    fetchInitialData();
+  }
+}
   };
 
   if (loading) {
