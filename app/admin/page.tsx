@@ -693,35 +693,18 @@ useEffect(() => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-800 mb-1.5">Hora de Apertura</label>
-                <select
-                  value={settings.opening_time}
-                  onChange={(e) => setSettings({ ...settings, opening_time: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                >
-                  <option value="06:00 AM">06:00 AM</option>
-                  <option value="07:00 AM">07:00 AM</option>
-                  <option value="08:00 AM">08:00 AM</option>
-                  <option value="09:00 AM">09:00 AM</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-800 mb-1.5">Hora de Cierre</label>
-                <select
-                  value={settings.closing_time}
-                  onChange={(e) => setSettings({ ...settings, closing_time: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                >
-                  <option value="04:00 PM">04:00 PM</option>
-                  <option value="05:00 PM">05:00 PM</option>
-                  <option value="06:00 PM">06:00 PM</option>
-                  <option value="07:00 PM">07:00 PM</option>
-                </select>
-              </div>
-            </div>
-
+<div className="grid grid-cols-2 gap-4">
+  <TimeSelect
+    label="Hora de Apertura"
+    value={settings.opening_time}
+    onChange={(val) => setSettings({ ...settings, opening_time: val })}
+  />
+  <TimeSelect
+    label="Hora de Cierre"
+    value={settings.closing_time}
+    onChange={(val) => setSettings({ ...settings, closing_time: val })}
+  />
+</div>
            <div className="w-full">
               <label className="block text-xs font-bold text-slate-800 mb-1.5">Duración del Turno (Minutos)</label>
               <input
