@@ -690,13 +690,14 @@ useEffect(() => {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={savingSettings}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4"
-              >
-                {savingSettings ? "Guardando..." : "Guardar Cambios"}
-              </button>
+           <button
+  type="submit"
+  disabled={savingSettings}
+  style={{ backgroundColor: settings.primary_color || '#4f46e5' }}
+  className="w-full text-white font-medium py-3 px-4 rounded-xl transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer mt-4"
+>
+  {savingSettings ? "Guardando..." : "Guardar Cambios"}
+</button>
             </form>
           </div>
         )}
