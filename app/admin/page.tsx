@@ -677,5 +677,8 @@ useEffect(() => {
             {savingSettings ? "Guardando..." : "Guardar Cambios"}
           </button>
         </form>
-      </div>
-    )}
+     </div>
+      )}
+    </div>
+  );
+}
