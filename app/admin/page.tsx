@@ -658,7 +658,7 @@ useEffect(() => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+            <div className="w-full">
                 <div>
                   <label className="block text-xs font-bold text-slate-800 mb-1.5">Duración del Turno (Minutos)</label>
                   <input
@@ -670,31 +670,10 @@ useEffect(() => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">Color Principal (Hex)</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={settings.primary_color}
-                      onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-                      className="w-9 h-9 rounded-xl border border-slate-200 p-0.5 cursor-pointer bg-white"
-                    />
-                    <input
-                      type="text"
-                      value={settings.primary_color}
-                      onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-                      className="flex-1 px-3.5 py-2.5 bg-slate-50/60 border border-slate-200/80 rounded-xl text-xs text-slate-700 uppercase outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-           <button
+         <button
   type="submit"
   disabled={savingSettings}
-  style={{ backgroundColor: settings.primary_color || '#4f46e5' }}
-  className="w-full text-white font-medium py-3 px-4 rounded-xl transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer mt-4"
+  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4 disabled:opacity-50"
 >
   {savingSettings ? "Guardando..." : "Guardar Cambios"}
 </button>
