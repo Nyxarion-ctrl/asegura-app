@@ -838,37 +838,42 @@ useEffect(() => {
                   const isSelected = (settings?.working_days || []).includes(day.id);
                   return (
                     <button
-                      key={day.id}
-                      type="button"
-                      onClick={() => {
-                        const nextDays = isSelected
-                          ? activeDays.filter((d) => d !== day.id)
-                          : [...activeDays, day.id];
-                        setSettings({ ...settings, working_days: nextDays });
-                      }}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                      }`}
-                    >
-                      {day.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={savingSettings}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4 disabled:opacity-50"
+                     key={day.id}
+              type="button"
+              onClick={() => {
+                let nextDays = [];
+                if (isSelected) {
+                  nextDays = activeDays.filter((d) => d !== day.id);
+                } else {
+                  nextDays = [...activeDays, day.id];
+                }
+                setSettings({ ...settings, working_days: nextDays });
+              }}
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                isSelected
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
             >
-              {savingSettings ? "Guardando..." : "Guardar Cambios"}
-            </button>
-          </form>
-        </div>
-      )}
+            {day.label}
+        </button>
+      );
+    </div>
+
+    <button
+      type="submit"
+      disabled={savingSettings}
+      className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer mt-4 disabled:opacity-50"
+    >
+      {savingSettings ? "Guardando..." : "Guardar Cambios"}
+    </button>
+  </form>
+</div>
+};
+
+  </div>
+);
+}
     </div>
   );
 }
