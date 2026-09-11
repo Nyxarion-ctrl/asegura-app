@@ -308,9 +308,9 @@ useEffect(() => {
   closing_time: settings.closing_time,
   slot_duration_minutes: settings.slot_duration_minutes,
   primary_color: settings.primary_color,
-  item_singular: settings.item_singular || "Clase",
-  item_plural: settings.item_plural || "Clases",
-  action_title: settings.action_title || "Reserva tu Clase en Segundos",
+  item_singular: settings.item_singular || "Servicio",
+  item_plural: settings.item_plural || "Servicios",
+  action_title: settings.action_title || "Reserva tu Servicio en Segundos",
   action_subtitle: settings.action_subtitle || "Selecciona el horario disponible y confirma tu solicitud sin complicaciones.",
 };
 
@@ -701,10 +701,25 @@ useEffect(() => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-800 mb-1.5">Nombre Plural (Ej. Clases)</label>
+               <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-4 my-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-900">Terminología de la App</h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">Nombre Singular (Ej. Servicio / Cita / Clase)</label>
                 <input
                   type="text"
-                  placeholder="Ej. Clases"
+                  placeholder="Ej. Servicio, Cita o Clase"
+                  value={settings?.item_singular || ""}
+                  onChange={(e) => setSettings({ ...settings, item_singular: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:border-indigo-500 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">Nombre Plural (Ej. Servicios / Citas / Clases)</label>
+                <input
+                  type="text"
+                  placeholder="Ej. Servicios, Citas o Clases"
                   value={settings?.item_plural || ""}
                   onChange={(e) => setSettings({ ...settings, item_plural: e.target.value })}
                   className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:border-indigo-500 transition-all"
@@ -716,7 +731,7 @@ useEffect(() => {
               <label className="block text-xs font-bold text-slate-800 mb-1.5">Título Principal</label>
               <input
                 type="text"
-                placeholder="Ej. Reserva tu Clase en Segundos"
+                placeholder="Ej. Agenda tu Servicio, Cita o Clase"
                 value={settings?.action_title || ""}
                 onChange={(e) => setSettings({ ...settings, action_title: e.target.value })}
                 className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:border-indigo-500 transition-all"
@@ -727,7 +742,7 @@ useEffect(() => {
               <label className="block text-xs font-bold text-slate-800 mb-1.5">Subtítulo Explicativo</label>
               <input
                 type="text"
-                placeholder="Ej. Selecciona el horario disponible..."
+                placeholder="Ej. Selecciona el horario disponible y confirma tu reserva..."
                 value={settings?.action_subtitle || ""}
                 onChange={(e) => setSettings({ ...settings, action_subtitle: e.target.value })}
                 className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:border-indigo-500 transition-all"
