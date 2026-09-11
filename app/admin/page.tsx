@@ -815,7 +815,7 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Días Laborables */}
+         {/* Días Laborables */}
           <div className="mt-4">
             <label className="block text-xs font-bold text-slate-800 mb-2">Días Laborables</label>
             <div className="flex flex-wrap gap-2">
@@ -828,7 +828,7 @@ useEffect(() => {
                 { id: 'sab', label: 'Sáb' },
                 { id: 'dom', label: 'Dom' },
               ].map((day) => {
-                const activeDays = (settings && settings.working_days) ? settings.working_days : ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
+                const activeDays = settings && settings.working_days ? settings.working_days : ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
                 const isSelected = activeDays.includes(day.id);
                 
                 return (
@@ -863,8 +863,6 @@ useEffect(() => {
           </button>
         </form>
       </div>
-    )}
-  </div>
-</div>
+    </div>
   );
 }
