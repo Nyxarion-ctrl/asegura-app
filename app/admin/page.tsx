@@ -38,6 +38,10 @@ export interface BusinessSettings {
 buffer_minutes?: number;
   currency?: string;
   working_days?: string[];
+  item_singular?: string;
+  item_plural?: string;
+  action_title?: string;
+  action_subtitle?: string;
 }
 
 interface TimeSelectProps {
@@ -296,15 +300,19 @@ useEffect(() => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const payload = {
-      owner_id: user.id,
-      business_name: settings.business_name,
-      whatsapp_number: settings.whatsapp_number,
-      opening_time: settings.opening_time,
-      closing_time: settings.closing_time,
-      slot_duration_minutes: settings.slot_duration_minutes,
-      primary_color: settings.primary_color,
-    };
+   const payload = {
+  owner_id: user.id,
+  business_name: settings.business_name,
+  whatsapp_number: settings.whatsapp_number,
+  opening_time: settings.opening_time,
+  closing_time: settings.closing_time,
+  slot_duration_minutes: settings.slot_duration_minutes,
+  primary_color: settings.primary_color,
+  item_singular: settings.item_singular || "Clase",
+  item_plural: settings.item_plural || "Clases",
+  action_title: settings.action_title || "Reserva tu Clase en Segundos",
+  action_subtitle: settings.action_subtitle || "Selecciona el horario disponible y confirma tu solicitud sin complicaciones.",
+};
 
    let result;
     if (businessId) {
@@ -678,6 +686,55 @@ useEffect(() => {
               />
             </div>
 
+<div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-4 my-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-900">Terminología de la App</h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">Nombre Singular (Ej. Clase)</label>
+                <input
+                  type="text"
+                  placeholder="Ej. Clase"
+                  value={settings?.item_singular || ""}
+                  onChange={(e) => setSettings({ ...settings, item_singular: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:border-indigo-500 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">Nombre Plural (Ej. Clases)</label>
+                <input
+                  type="text"
+                  placeholder="Ej. Clases"
+                  value={settings?.item_plural || ""}
+                  onChange={(e) => setSettings({ ...settings, item_plural: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:border-indigo-500 transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">Título Principal</label>
+              <input
+                type="text"
+                placeholder="Ej. Reserva tu Clase en Segundos"
+                value={settings?.action_title || ""}
+                onChange={(e) => setSettings({ ...settings, action_title: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:border-indigo-500 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">Subtítulo Explicativo</label>
+              <input
+                type="text"
+                placeholder="Ej. Selecciona el horario disponible..."
+                value={settings?.action_subtitle || ""}
+                onChange={(e) => setSettings({ ...settings, action_subtitle: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:border-indigo-500 transition-all"
+              />
+            </div>
+          </div>
+            
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5">Número de WhatsApp (Notificaciones)</label>
               <input
